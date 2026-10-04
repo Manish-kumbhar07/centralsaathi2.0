@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="100%" height="100%">
+  <defs>
+    <linearGradient id="heritageSky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#18181b"/>
+      <stop offset="40%" stop-color="#451a03"/>
+      <stop offset="75%" stop-color="#78350f"/>
+      <stop offset="100%" stop-color="#1c1917"/>
+    </linearGradient>
+    <linearGradient id="warmAmberGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Sky Twilight Warm Sunset -->
+  <rect width="1920" height="1080" fill="url(#heritageSky)"/>
+
+  <!-- Victoria Terminus / CSMT Grand Gothic Dome & Turrets Silhouette -->
+  <g fill="#0c0a09" opacity="0.95">
+    <!-- Main Central Octagonal Dome -->
+    <path d="M 1250,380 C 1250,220 1370,180 1450,150 C 1530,180 1650,220 1650,380 Z"/>
+    <!-- Dome Finial / Statue Spire -->
+    <line x1="1450" y1="150" x2="1450" y2="90" stroke="#f59e0b" stroke-width="4"/>
+    <circle cx="1450" cy="85" r="8" fill="#f59e0b"/>
+    <!-- Dome Base & Classical Cornice -->
+    <rect x="1220" y="380" width="460" height="40"/>
+    
+    <!-- Gothic Windows in Dome Base -->
+    <g fill="#f59e0b" opacity="0.5">
+      <path d="M 1280,360 Q 1300,330 1320,360 Z"/>
+      <path d="M 1340,360 Q 1360,330 1380,360 Z"/>
+      <path d="M 1400,360 Q 1420,330 1440,360 Z"/>
+      <path d="M 1460,360 Q 1480,330 1500,360 Z"/>
+      <path d="M 1520,360 Q 1540,330 1560,360 Z"/>
+      <path d="M 1580,360 Q 1600,330 1620,360 Z"/>
+    </g>
+
+    <!-- Flanking Gothic Corner Towers & Spires -->
+    <polygon points="1080,480 1130,220 1180,480"/>
+    <polygon points="1720,480 1770,220 1820,480"/>
+    <!-- Main Facade Wall -->
+    <rect x="950" y="420" width="970" height="280"/>
+  </g>
+
+  <!-- Ornate Venetian Gothic Arches with Warm Backlighting -->
+  <g fill="#d97706" opacity="0.35">
+    <path d="M 1020,540 Q 1060,470 1100,540 L 1100,650 L 1020,650 Z"/>
+    <path d="M 1140,540 Q 1180,470 1220,540 L 1220,650 L 1140,650 Z"/>
+    <path d="M 1260,540 Q 1300,470 1340,540 L 1340,650 L 1260,650 Z"/>
+    <path d="M 1380,540 Q 1450,440 1520,540 L 1520,650 L 1380,650 Z"/>
+    <path d="M 1560,540 Q 1600,470 1640,540 L 1640,650 L 1560,650 Z"/>
+    <path d="M 1680,540 Q 1720,470 1760,540 L 1760,650 L 1680,650 Z"/>
+    <path d="M 1800,540 Q 1840,470 1880,540 L 1880,650 L 1800,650 Z"/>
+  </g>
+
+  <!-- Platform Train Shed Victorian Arched Glass Trusses -->
+  <g stroke="#78350f" stroke-width="3" opacity="0.7" fill="none">
+    <path d="M 700,720 Q 1100,460 1500,720"/>
+    <path d="M 900,720 Q 1300,460 1700,720"/>
+    <path d="M 1100,720 Q 1500,460 1900,720"/>
+  </g>
+
+  <!-- Polished Terminus Buffer Stops & Trailing Tracks -->
+  <path d="M 650,780 L 1920,700 L 1920,1080 L 650,1080 Z" fill="#140e0b"/>
+
+  <g stroke="#f59e0b" stroke-width="5" opacity="0.75">
+    <line x1="1100" y1="740" x2="1850" y2="1080"/>
+    <line x1="1180" y1="740" x2="2050" y2="1080"/>
+    <line x1="960" y1="760" x2="1480" y2="1080"/>
+    <line x1="1020" y1="760" x2="1640" y2="1080"/>
+  </g>
+
+  <!-- Heritage Mumbai Suburban EMU Local Train at Platform 1 -->
+  <g id="heritageTrain">
+    <path d="M 1240,630 L 1580,570 L 1720,770 L 1360,840 Z" fill="#291807" stroke="#d97706" stroke-width="2"/>
+    <!-- Yellow and Maroon Traditional Vintage Livery Stripes -->
+    <path d="M 1260,700 L 1400,670 L 1410,705 L 1270,735 Z" fill="#eab308"/>
+    <path d="M 1270,735 L 1410,705 L 1420,740 L 1280,770 Z" fill="#991b1b"/>
+    <!-- Headlight Amber Lamps -->
+    <circle cx="1320" cy="770" r="12" fill="#fbbf24"/>
+    <circle cx="1390" cy="755" r="12" fill="#fbbf24"/>
+    <polygon points="1320,770 1390,755 1780,1020 1420,1080" fill="#f59e0b" opacity="0.2"/>
+  </g>
+</svg>

@@ -1,0 +1,10 @@
+{
+  "name": "Remix CentralSaathi",
+  "description": "Central Line Mumbai Local Timetable Route Finder, commuter intelligence, official mega block alerts, and suburban timetable schedule analyzer.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

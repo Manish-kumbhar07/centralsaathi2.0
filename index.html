@@ -1,0 +1,2137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CentralSaathi — Mumbai Local Transit Suite</title>
+  <meta name="description" content="CentralSaathi: Advanced Mumbai Local railway planner with Satellite Railway Radar, door-side indicators, live crowd predictor, coach positions, geofenced wake alarms, and Gemini AI transit copilot." />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Plus Jakarta Sans & Playfair Display -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS & JS for Advanced Satellite Radar & Tactical Railway Maps -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Official Google Maps Platform JavaScript API Bootstrap Loader -->
+  <script>
+    (g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({
+      key: "AIzaSyC5DSSlAUyDiU5VZOs6p0_A5tGPPUmSXOo",
+      v: "weekly"
+    });
+  </script>
+
+  <style>
+    :root {
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-display: 'Playfair Display', Georgia, serif;
+      --color-emerald-deep: #064e3b;
+      --color-emerald-accent: #047857;
+      --color-amber-gold: #d97706;
+      --color-twilight-navy: #07131e;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: #f8fafc;
+      color: #0f172a;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .font-display {
+      font-family: var(--font-display);
+    }
+
+    /* Google Maps & Leaflet Canvas */
+    #googleMapCanvas, #leafletRailwayMap {
+      width: 100%;
+      height: 100%;
+      min-height: 560px;
+      border-radius: 1.25rem;
+      background-color: #07131e;
+    }
+
+    /* Radar Pulse Animation for Station and Train Markers */
+    @keyframes radar-pulse {
+      0% { transform: scale(0.9); opacity: 0.95; }
+      50% { transform: scale(1.6); opacity: 0.35; }
+      100% { transform: scale(2.3); opacity: 0; }
+    }
+    .radar-pulse-ring {
+      animation: radar-pulse 2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+    }
+
+    /* Custom Leaflet Dark UI */
+    .leaflet-popup-content-wrapper {
+      background: #07131e !important;
+      color: #f8fafc !important;
+      border-radius: 1rem !important;
+      border: 1px solid rgba(16, 185, 129, 0.35) !important;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;
+      padding: 0 !important;
+    }
+    .leaflet-popup-content {
+      margin: 12px 14px !important;
+      line-height: 1.4 !important;
+    }
+    .leaflet-popup-tip {
+      background: #07131e !important;
+    }
+    .leaflet-container {
+      background-color: #07131e !important;
+      font-family: inherit !important;
+    }
+
+    /* Route timeline stem */
+    .route-timeline-stem {
+      position: absolute;
+      top: 14px;
+      bottom: 14px;
+      left: 11px;
+      width: 2px;
+      background-color: #cbd5e1;
+      z-index: 1;
+    }
+
+    /* Nav tab active state */
+    .nav-tab-active {
+      background-color: #064e3b !important;
+      color: #ffffff !important;
+      font-weight: 700 !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    }
+
+    /* Opening railway track draw animation */
+    @keyframes trackLineDraw {
+      0% { width: 0%; opacity: 0; }
+      40% { width: 100%; opacity: 1; }
+      100% { width: 100%; opacity: 1; }
+    }
+    .anim-track-draw {
+      animation: trackLineDraw 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes trainPulse {
+      0% { transform: translateX(-30px); opacity: 0; }
+      50% { opacity: 1; }
+      100% { transform: translateX(0); opacity: 1; }
+    }
+    .anim-train-arrive {
+      animation: trainPulse 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+
+    /* Rotating swap button */
+    .swap-btn-icon {
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .swap-btn-icon.rotated {
+      transform: rotate(180deg);
+    }
+
+    /* Shimmer skeleton */
+    @keyframes shimmer {
+      100% { transform: translateX(100%); }
+    }
+    .skeleton-box {
+      position: relative;
+      overflow: hidden;
+      background-color: #e2e8f0;
+    }
+    .skeleton-box::after {
+      position: absolute;
+      top: 0; right: 0; bottom: 0; left: 0;
+      transform: translateX(-100%);
+      background-image: linear-gradient(90deg, rgba(255,255,255, 0) 0, rgba(255,255,255, 0.5) 50%, rgba(255,255,255, 0) 100%);
+      animation: shimmer 1.5s infinite;
+      content: '';
+    }
+
+    /* Hero Atmospheric Backdrop with deep dusk railway aesthetic */
+    .hero-bg-atmospheric {
+      background: linear-gradient(90deg, rgba(7, 19, 30, 0.94) 0%, rgba(7, 19, 30, 0.82) 38%, rgba(7, 19, 30, 0.22) 75%, rgba(7, 19, 30, 0.35) 100%),
+                  radial-gradient(ellipse at 80% 50%, rgba(217, 119, 6, 0.20) 0%, rgba(7, 19, 30, 0) 70%),
+                  url('/public/assets/mumbai_railway_hero.svg') right center / cover no-repeat;
+      background-color: #07131e;
+      transition: background 0.4s ease;
+    }
+
+    /* Gauge needle styling */
+    .gauge-dial-circle {
+      stroke-dasharray: 283;
+      stroke-dashoffset: 70;
+      transition: stroke-dashoffset 0.4s ease, stroke 0.4s ease;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-emerald-100 selection:text-emerald-900 bg-[#f8fafc]">
+
+  <!-- ============================================================== -->
+  <!-- 1. STARTUP ANIMATION OVERLAY (1.6s) -->
+  <!-- ============================================================== -->
+  <div id="openingAnimationOverlay" class="fixed inset-0 z-50 bg-[#07131e] flex flex-col items-center justify-center transition-opacity duration-600">
+    <div class="flex flex-col items-center text-center px-4 max-w-sm">
+      
+      <!-- Moving Train Icon with Headlight Glow -->
+      <div class="relative w-16 h-16 mb-5 rounded-2xl bg-emerald-600/20 border border-emerald-500/40 p-3.5 flex items-center justify-center shadow-2xl anim-train-arrive">
+        <svg class="w-9 h-9 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="16" height="16" x="4" y="3" rx="2"/>
+          <path d="M4 11h16"/>
+          <path d="M12 3v8"/>
+          <path d="m8 19-2 3"/>
+          <path d="m16 19 2 3"/>
+          <circle cx="8" cy="15" r="1.5" fill="#34d399"/>
+          <circle cx="16" cy="15" r="1.5" fill="#34d399"/>
+        </svg>
+        <div class="absolute -inset-1 rounded-2xl bg-emerald-500/20 blur-md pointer-events-none"></div>
+      </div>
+
+      <!-- App Title Reveal -->
+      <h1 class="text-3xl font-black tracking-tight text-white flex items-center gap-2">
+        <span>CentralSaathi</span>
+        <span class="text-xs px-2 py-0.5 rounded bg-emerald-700 text-white font-bold uppercase tracking-wider">PRO</span>
+      </h1>
+      <p class="text-xs text-emerald-200/90 mt-1 font-medium tracking-wide">Mumbai Suburban Commuter Intelligence</p>
+
+      <!-- Animated Railway Track Line -->
+      <div class="w-48 h-1 bg-white/10 rounded-full mt-6 overflow-hidden">
+        <div class="h-full bg-gradient-to-r from-emerald-500 via-amber-400 to-teal-400 anim-track-draw"></div>
+      </div>
+
+      <div class="text-[11px] text-slate-400 mt-3 font-mono">Synchronizing Central Railway WTT 2026...</div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- 2. POPUP LOCATION PERMISSION MODAL -->
+  <!-- ============================================================== -->
+  <div id="locationPermissionModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-200 transform transition-all">
+      <div class="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-800 mx-auto mb-4">
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+      </div>
+
+      <div class="text-center">
+        <h3 class="text-lg font-bold text-slate-900">Enable Live Location Access?</h3>
+        <p class="text-xs text-slate-500 mt-2 leading-relaxed">
+          Allowing location access unlocks CentralSaathi's live transit features:
+        </p>
+      </div>
+
+      <div class="mt-4 space-y-2.5 bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-xs text-slate-700">
+        <div class="flex items-center gap-2">
+          <span class="text-emerald-700 font-bold">--</span>
+          <span>Automatic detection of your nearest railway station</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-emerald-700 font-bold">--</span>
+          <span>Live GPS speedometer telemetry in km/h</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-emerald-700 font-bold">--</span>
+          <span>Geofenced wake-up alarms before your destination stop</span>
+        </div>
+      </div>
+
+      <div class="mt-6 flex flex-col sm:flex-row gap-2.5">
+        <button id="modalAllowLocationBtn" class="flex-1 py-3 bg-[#064e3b] hover:bg-[#047857] text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-950/20 transition-colors">
+          Enable Location Access
+        </button>
+        <button id="modalDismissLocationBtn" class="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors">
+          Continue Manually
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- 2.1 POPUP CUSTOMIZE LANDING BACKGROUND MODAL -->
+  <!-- ============================================================== -->
+  <div id="heroBgModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-[#0b1726] border border-slate-700 rounded-3xl max-w-lg w-full p-6 shadow-2xl text-white transform transition-all">
+      <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+              <circle cx="9" cy="9" r="2"/>
+              <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white">Landing Page Background</h3>
+            <p class="text-[11px] text-slate-400">Choose a curated Central Railway theme or upload a photo</p>
+          </div>
+        </div>
+        <button onclick="toggleHeroBgModal(false)" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Presets Grid -->
+      <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2.5">Curated Railway Themes</div>
+      <div class="grid grid-cols-2 gap-2.5 mb-4">
+        <!-- Preset 1: Dusk EMU (Default) -->
+        <button 
+          onclick="selectPresetBg('dusk')" 
+          class="bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700 hover:border-emerald-500 rounded-2xl p-2.5 text-left transition-all group relative overflow-hidden flex flex-col justify-between h-24"
+        >
+          <div class="h-10 rounded-xl w-full bg-gradient-to-r from-amber-700 via-orange-800 to-slate-900 border border-white/10 mb-2 flex items-center justify-end px-2">
+            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-500/80 text-white uppercase">Default</span>
+          </div>
+          <div>
+            <div class="text-xs font-bold text-white group-hover:text-emerald-300">Dusk EMU Twilight</div>
+            <div class="text-[10px] text-slate-400 truncate">Golden hour Mumbai local</div>
+          </div>
+        </button>
+
+        <!-- Preset 2: Midnight Electric Rail -->
+        <button 
+          onclick="selectPresetBg('midnight')" 
+          class="bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700 hover:border-cyan-500 rounded-2xl p-2.5 text-left transition-all group relative overflow-hidden flex flex-col justify-between h-24"
+        >
+          <div class="h-10 rounded-xl w-full bg-gradient-to-r from-cyan-900 via-blue-950 to-slate-950 border border-white/10 mb-2 flex items-center justify-end px-2">
+            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-cyan-500/80 text-white uppercase">Night</span>
+          </div>
+          <div>
+            <div class="text-xs font-bold text-white group-hover:text-cyan-300">Midnight Electric</div>
+            <div class="text-[10px] text-slate-400 truncate">Cyber neon catenary tracks</div>
+          </div>
+        </button>
+
+        <!-- Preset 3: Monsoon Kasara Ghat -->
+        <button 
+          onclick="selectPresetBg('monsoon')" 
+          class="bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700 hover:border-teal-500 rounded-2xl p-2.5 text-left transition-all group relative overflow-hidden flex flex-col justify-between h-24"
+        >
+          <div class="h-10 rounded-xl w-full bg-gradient-to-r from-emerald-950 via-teal-900 to-slate-900 border border-white/10 mb-2 flex items-center justify-end px-2">
+            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-teal-500/80 text-white uppercase">Monsoon</span>
+          </div>
+          <div>
+            <div class="text-xs font-bold text-white group-hover:text-teal-300">Monsoon Kasara Ghat</div>
+            <div class="text-[10px] text-slate-400 truncate">Rain mist &amp; lush valleys</div>
+          </div>
+        </button>
+
+        <!-- Preset 4: Victoria Terminus Heritage -->
+        <button 
+          onclick="selectPresetBg('heritage')" 
+          class="bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700 hover:border-amber-500 rounded-2xl p-2.5 text-left transition-all group relative overflow-hidden flex flex-col justify-between h-24"
+        >
+          <div class="h-10 rounded-xl w-full bg-gradient-to-r from-amber-950 via-stone-900 to-orange-950 border border-white/10 mb-2 flex items-center justify-end px-2">
+            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-600/80 text-white uppercase">Heritage</span>
+          </div>
+          <div>
+            <div class="text-xs font-bold text-white group-hover:text-amber-300">Victoria Terminus VT</div>
+            <div class="text-[10px] text-slate-400 truncate">Gothic architectural dome</div>
+          </div>
+        </button>
+      </div>
+
+      <!-- Upload Custom Wallpaper Section -->
+      <div class="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800 mb-4">
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-xs font-bold text-slate-200">Upload Your Own Photo</div>
+          <span class="text-[10px] text-slate-400 font-mono">PNG, JPG, WEBP, SVG</span>
+        </div>
+        <input type="file" id="heroCustomWallpaperFileInput" accept="image/*" class="hidden" onchange="handleHeroBgFileSelected(event)">
+        <label for="heroCustomWallpaperFileInput" class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-500 rounded-xl text-xs font-bold text-center text-slate-200 hover:text-white cursor-pointer transition-colors flex items-center justify-center gap-2">
+          <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" x2="12" y1="3" y2="15"/>
+          </svg>
+          <span>Choose Image From Device</span>
+        </label>
+      </div>
+
+      <!-- Footer Buttons -->
+      <div class="flex items-center justify-between pt-2">
+        <button onclick="resetHeroBgToDefault()" class="text-xs font-bold text-amber-400 hover:text-amber-300 underline underline-offset-4 transition-colors">
+          Reset to Default Wallpaper
+        </button>
+        <button onclick="toggleHeroBgModal(false)" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-bold transition-colors">
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- 3. TOP MICRO STATUS BAR -->
+  <!-- ============================================================== -->
+  <div class="bg-[#07131e] text-slate-300 text-[11px] font-medium py-1.5 px-4 sm:px-6 lg:px-8 border-b border-slate-800">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2 truncate">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0 animate-pulse"></span>
+        <span class="font-bold text-white tracking-wide uppercase text-[10px]">CR Live Operations:</span>
+        <span class="truncate text-slate-300 text-xs">CSMT / Kalyan Main Line · Kasara &amp; Karjat corridors operational · WTT 2026 Verified</span>
+      </div>
+      <div class="flex items-center gap-4 shrink-0 pl-3">
+        <span class="hidden sm:inline text-slate-400">55 Stations · 400+ Suburban Services</span>
+        <span id="liveClockDisplay" class="font-mono text-emerald-400 font-semibold tracking-wider">--:--:--</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- 4. PINNED APPLICATION NAVBAR -->
+  <!-- ============================================================== -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        
+        <!-- Brand Identity -->
+        <div class="flex items-center gap-3 cursor-pointer" onclick="switchAppTab('landing')">
+          <div class="w-9 h-9 rounded-xl bg-[#064e3b] flex items-center justify-center text-white shadow-sm">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="16" height="16" x="4" y="3" rx="2"/>
+              <path d="M4 11h16"/>
+              <path d="M12 3v8"/>
+              <circle cx="8" cy="15" r="1" fill="currentColor"/>
+              <circle cx="16" cy="15" r="1" fill="currentColor"/>
+            </svg>
+          </div>
+          <div>
+            <div class="font-extrabold text-slate-900 tracking-tight text-base flex items-center gap-1.5">
+              <span>CentralSaathi</span>
+              <span class="text-[9px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 uppercase">PRO</span>
+            </div>
+            <p class="text-[10px] text-slate-500 leading-none">Mumbai Local Transit Suite</p>
+          </div>
+        </div>
+
+        <!-- Main Desktop Navigation Tabs -->
+        <nav class="hidden lg:flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold text-slate-600">
+          <button class="nav-tab-btn px-3 py-1.5 rounded-lg transition-all nav-tab-active" data-tab="landing">
+            Home
+          </button>
+          <button class="nav-tab-btn px-3 py-1.5 rounded-lg transition-all hover:text-slate-900" data-tab="planner">
+            Journey Planner
+          </button>
+          <button class="nav-tab-btn px-3 py-1.5 rounded-lg transition-all hover:text-slate-900 flex items-center gap-1.5" data-tab="satellite">
+            <svg class="w-3.5 h-3.5 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/>
+              <line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/>
+            </svg>
+            <span>Satellite Radar</span>
+          </button>
+
+          <!-- COMMUTER HELPDESK SECTION -->
+          <div class="relative group">
+            <button class="nav-tab-btn px-3 py-1.5 rounded-lg transition-all hover:text-slate-900 flex items-center gap-1" data-tab="commuter-suite">
+              <span>Commuter</span>
+              <svg class="w-3 h-3 text-slate-500 transition-transform group-hover:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+            </button>
+            <!-- Dropdown submenu -->
+            <div class="hidden group-hover:block absolute left-0 top-full pt-1 w-64 z-50">
+              <div class="bg-white border border-slate-200 rounded-2xl shadow-xl p-2 space-y-1 text-xs">
+                <button onclick="switchAppTab('commuter-suite'); showCommuterSubTab('fares')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-800 font-semibold">
+                  Fare &amp; Season Pass Matrix
+                </button>
+                <button onclick="switchAppTab('commuter-suite'); showCommuterSubTab('coach')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-800 font-semibold">
+                  12/15-Car Coach &amp; FOB Guide
+                </button>
+                <button onclick="switchAppTab('commuter-suite'); showCommuterSubTab('doors')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-800 font-semibold">
+                  Platform Door Opening Side
+                </button>
+                <button onclick="switchAppTab('commuter-suite'); showCommuterSubTab('amenities')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-800 font-semibold">
+                  Station Amenities Directory
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- MY PERSONAL COMMUTE & PASS SECTION -->
+          <button class="nav-tab-btn px-3 py-1.5 rounded-lg transition-all hover:text-slate-900 flex items-center gap-1" data-tab="my-personal">
+            <span>My Personal</span>
+            <span class="text-[9px] bg-amber-50 text-amber-800 px-1 py-0.2 rounded border border-amber-200 font-bold">TRACK</span>
+          </button>
+
+          <button class="nav-tab-btn px-3 py-1.5 rounded-lg transition-all hover:text-slate-900" data-tab="speedometer">
+            Speed &amp; Alarm
+          </button>
+          <button class="nav-tab-btn px-3 py-1.5 rounded-lg transition-all hover:text-slate-900" data-tab="blocks">
+            Mega Blocks
+          </button>
+          <button class="nav-tab-btn px-3 py-1.5 rounded-lg transition-all hover:text-slate-900 text-rose-700 font-bold" data-tab="sos">
+            Safety SOS
+          </button>
+        </nav>
+
+        <!-- Right Side: Gemini AI Assistant Launcher -->
+        <div class="flex items-center gap-2">
+          <button 
+            onclick="switchAppTab('ai-assistant')" 
+            class="px-3.5 py-1.5 bg-[#064e3b] hover:bg-[#047857] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 focus:outline-none"
+          >
+            <svg class="w-3.5 h-3.5 text-emerald-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v4"/><path d="M12 18v4"/><path d="m4.93 4.93 2.83 2.83"/><path d="m16.24 16.24 2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="m4.93 19.07 2.83-2.83"/><path d="m16.24 7.76 2.83-2.83"/>
+            </svg>
+            <span>Gemini Transit AI</span>
+          </button>
+
+          <!-- Mobile Menu Button -->
+          <div class="lg:hidden relative">
+            <button id="mobileMenuToggle" class="p-2 bg-slate-100 rounded-lg text-slate-700 hover:bg-slate-200">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/>
+              </svg>
+            </button>
+            <div id="mobileDropdown" class="hidden absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-2 space-y-1">
+              <button onclick="switchAppTab('landing')" class="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-100">Home</button>
+              <button onclick="switchAppTab('planner')" class="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-100">Journey Planner</button>
+              <button onclick="switchAppTab('satellite')" class="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-100">Satellite Radar</button>
+              <button onclick="switchAppTab('commuter-suite')" class="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-100">Commuter Desk (Fares, Coach, Amenities)</button>
+              <button onclick="switchAppTab('my-personal')" class="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-amber-800 hover:bg-amber-50">My Personal Commute &amp; Pass</button>
+              <button onclick="switchAppTab('speedometer')" class="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-100">Speed &amp; Wake Alarm</button>
+              <button onclick="switchAppTab('blocks')" class="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-100">Mega Blocks</button>
+              <button onclick="switchAppTab('sos')" class="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-rose-700 hover:bg-rose-50">Safety SOS</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================================================== -->
+  <!-- MAIN WORKSPACE CONTAINER -->
+  <!-- ============================================================== -->
+  <main class="flex-1 flex flex-col">
+
+    <!-- ============================================================ -->
+    <!-- TAB 1: LANDING PAGE (IMAGE 1 & IMAGE 2 REFINED STYLE) -->
+    <!-- ============================================================ -->
+    <section id="tab-landing" class="app-tab-panel flex-1 py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+      
+      <!-- HERO SECTION WITH EDITORIAL DISPLAY HEADLINE (LEFT-ALIGNED TO SHOWCASE WALLPAPER) -->
+      <div id="heroAtmosphericBanner" class="relative hero-bg-atmospheric rounded-3xl p-6 sm:p-10 lg:p-12 text-white overflow-hidden shadow-2xl mb-8 border border-white/10 transition-all duration-500 min-h-[540px] flex items-center">
+        
+        <!-- Background Control Button in Top-Right Corner of Hero -->
+        <div class="absolute top-4 right-4 z-20 flex items-center gap-2">
+          <button 
+            id="openBgChooserBtn"
+            onclick="toggleHeroBgModal(true)"
+            class="px-3.5 py-1.5 bg-black/60 hover:bg-black/85 active:scale-95 backdrop-blur-md border border-white/20 hover:border-white/40 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-lg"
+            title="Change landing page background"
+          >
+            <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+              <circle cx="9" cy="9" r="2"/>
+              <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+            </svg>
+            <span id="currentHeroBgLabel">Change Background</span>
+          </button>
+        </div>
+
+        <div class="relative z-10 max-w-lg text-left py-4 mr-auto">
+          
+          <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-xs font-semibold text-emerald-200 border border-white/15 mb-4">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span>Central Railway Mumbai Suburban</span>
+            <span>/</span>
+            <span>WTT 2026 Verified</span>
+          </div>
+
+          <!-- Editorial Serif Display Headline -->
+          <h1 class="font-display text-3xl sm:text-5xl lg:text-5.5xl font-normal tracking-tight text-white drop-shadow-md leading-tight">
+            Where would you like to go?
+          </h1>
+
+          <p class="text-slate-200 text-xs sm:text-sm mt-2.5 max-w-lg font-light leading-relaxed">
+            Suburban Working Time Table schedules, door-side exits, coach positions, and orbital satellite radar across Central Railway.
+          </p>
+
+          <!-- SLEEK GLASSMORPHIC INLINE SEARCH BOX (LEFT-ALIGNED) -->
+          <div class="mt-6 bg-[#07131e]/85 backdrop-blur-md border border-white/20 rounded-3xl p-5 sm:p-6 shadow-2xl text-left max-w-lg">
+            
+            <div class="space-y-3">
+              
+              <!-- Row 1: FROM & TO Stations -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <!-- FROM -->
+                <div class="relative">
+                  <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-1">FROM STATION</label>
+                  <input 
+                    type="text" 
+                    id="heroOriginInput" 
+                    autocomplete="off" 
+                    placeholder="Boarding (e.g. Thane)" 
+                    class="w-full px-3.5 py-2.5 bg-white text-slate-900 font-bold rounded-xl text-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs"
+                    data-code=""
+                    value=""
+                  />
+                  <div id="heroOriginDropdown" class="hidden absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-56 overflow-y-auto z-50 divide-y divide-slate-100 text-slate-800"></div>
+                </div>
+
+                <!-- TO -->
+                <div class="relative">
+                  <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-1">TO DESTINATION</label>
+                  <input 
+                    type="text" 
+                    id="heroDestInput" 
+                    autocomplete="off" 
+                    placeholder="Alighting (e.g. CSMT)" 
+                    class="w-full px-3.5 py-2.5 bg-white text-slate-900 font-bold rounded-xl text-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs"
+                    data-code=""
+                    value=""
+                  />
+                  <div id="heroDestDropdown" class="hidden absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-56 overflow-y-auto z-50 divide-y divide-slate-100 text-slate-800"></div>
+                </div>
+              </div>
+
+              <!-- Row 2: TIME & SERVICE TYPE -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <!-- DEPARTURE TIME -->
+                <div>
+                  <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-1">DEPARTURE TIME</label>
+                  <input 
+                    type="time" 
+                    id="heroTimeInput" 
+                    class="w-full px-3.5 py-2.5 bg-white text-slate-900 font-bold rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs"
+                  />
+                </div>
+
+                <!-- SERVICE TYPE -->
+                <div>
+                  <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-1">SERVICE TYPE</label>
+                  <select id="heroServiceSelect" class="w-full px-3.5 py-2.5 bg-white text-slate-900 font-bold rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs">
+                    <option value="ALL">All Trains</option>
+                    <option value="FAST">Fast Local</option>
+                    <option value="AC">AC Suburban</option>
+                    <option value="SLOW">Slow Local</option>
+                  </select>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- SEARCH TRAINS BUTTON -->
+            <button 
+              id="heroSearchBtn"
+              onclick="executeHeroSearch()"
+              class="w-full mt-4 py-3.5 bg-[#064e3b] hover:bg-[#047857] active:bg-[#022c22] text-white font-extrabold text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-950/40 transition-all flex items-center justify-center gap-2"
+            >
+              <span>SEARCH TRAINS</span>
+              <svg class="w-4 h-4 text-emerald-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
+              </svg>
+            </button>
+
+            <!-- Quick Corridor Shortcuts -->
+            <div class="flex flex-wrap items-center gap-1.5 mt-3.5 text-xs text-slate-300">
+              <span class="text-slate-400 font-medium text-[11px]">Popular:</span>
+              <button onclick="quickPlanRoute('TNA', 'CSMT')" class="px-2 py-0.5 bg-white/10 hover:bg-white/20 rounded-md text-[10px] font-semibold text-white border border-white/10 transition-colors">
+                Thane ➔ CSMT
+              </button>
+              <button onclick="quickPlanRoute('KYN', 'DR')" class="px-2 py-0.5 bg-white/10 hover:bg-white/20 rounded-md text-[10px] font-semibold text-white border border-white/10 transition-colors">
+                Kalyan ➔ Dadar
+              </button>
+              <button onclick="quickPlanRoute('DI', 'CLA')" class="px-2 py-0.5 bg-white/10 hover:bg-white/20 rounded-md text-[10px] font-semibold text-white border border-white/10 transition-colors">
+                Dombivli ➔ Kurla
+              </button>
+              <button onclick="quickPlanRoute('KSRA', 'CSMT')" class="px-2 py-0.5 bg-white/10 hover:bg-white/20 rounded-md text-[10px] font-semibold text-white border border-white/10 transition-colors">
+                Kasara ➔ CSMT
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- FEATURES ABSENT IN M-INDICATOR -->
+      <div class="mb-8">
+        <div class="text-center max-w-xl mx-auto mb-6">
+          <h2 class="text-lg sm:text-xl font-bold text-slate-900">Engineered with Features Missing in Legacy Transit Apps</h2>
+          <p class="text-xs text-slate-500 mt-1">Tools and spatial precision designed specifically around real daily commuter friction points.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          
+          <!-- Feature 1: Live Crowd Predictor -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 hover:border-emerald-500 transition-all shadow-xs">
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center font-bold mb-3">
+              <svg class="w-5 h-5 text-emerald-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </div>
+            <h3 class="text-sm font-bold text-slate-900">Live Crowd &amp; Boarding Density Predictor</h3>
+            <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+              Historical boarding density models provide live status labels (Low, Moderate, Packed) and compartment occupancy for every train.
+            </p>
+            <button onclick="switchAppTab('planner')" class="text-xs font-bold text-emerald-800 mt-3 hover:underline">Inspect Live Predictor /</button>
+          </div>
+
+          <!-- Feature 2: Door Opening Side -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 hover:border-emerald-500 transition-all shadow-xs">
+            <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-800 flex items-center justify-center font-bold mb-3">
+              <svg class="w-5 h-5 text-amber-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="18" height="18" x="3" y="3" rx="2"/>
+                <path d="M9 3v18"/>
+                <circle cx="15" cy="12" r="1" fill="currentColor"/>
+              </svg>
+            </div>
+            <h3 class="text-sm font-bold text-slate-900">Platform Door Opening Side (Left / Right)</h3>
+            <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+              Know whether the door will open on the Left or Right side before reaching Dadar, Kurla, Thane or CSMT to prepare for seamless de-boarding.
+            </p>
+            <button onclick="switchAppTab('commuter-suite'); showCommuterSubTab('doors');" class="text-xs font-bold text-amber-800 mt-3 hover:underline">View Door Side Matrix /</button>
+          </div>
+
+          <!-- Feature 3: Destination Geofence Wake Alarm -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 hover:border-emerald-500 transition-all shadow-xs">
+            <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold mb-3">
+              <svg class="w-5 h-5 text-blue-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="13" r="8"/>
+                <path d="M12 9v4l2 2"/>
+                <path d="M5 3 2 6"/>
+                <path d="m22 6-3-3"/>
+                <path d="M6.38 18.7 4 21"/>
+                <path d="M17.64 18.67 20 21"/>
+              </svg>
+            </div>
+            <h3 class="text-sm font-bold text-slate-900">Destination Geofence Wake Alarm</h3>
+            <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+              Never overshoot your station while sleeping or on headphones. Wakes you with audio chime and haptic vibration 1.5 km before your destination.
+            </p>
+            <button onclick="switchAppTab('speedometer')" class="text-xs font-bold text-blue-700 mt-3 hover:underline">Setup Wake Alarm /</button>
+          </div>
+
+          <!-- Feature 4: High-Res Satellite Radar -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 hover:border-emerald-500 transition-all shadow-xs">
+            <div class="w-10 h-10 rounded-xl bg-sky-50 text-sky-700 flex items-center justify-center font-bold mb-3">
+              <svg class="w-5 h-5 text-sky-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/>
+                <line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/>
+              </svg>
+            </div>
+            <h3 class="text-sm font-bold text-slate-900">Satellite Railway Radar</h3>
+            <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+              Photorealistic orbital imagery of all tracks, platform sheds, and crossovers across the entire Mumbai suburban division.
+            </p>
+            <button onclick="switchAppTab('satellite')" class="text-xs font-bold text-sky-700 mt-3 hover:underline">Open Satellite Map /</button>
+          </div>
+
+          <!-- Feature 5: Gemini AI Transit Copilot -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 hover:border-emerald-500 transition-all shadow-xs">
+            <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold mb-3">
+              <svg class="w-5 h-5 text-indigo-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2v4"/><path d="M12 18v4"/><path d="m4.93 4.93 2.83 2.83"/><path d="m16.24 16.24 2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="m4.93 19.07 2.83-2.83"/><path d="m16.24 7.76 2.83-2.83"/>
+              </svg>
+            </div>
+            <h3 class="text-sm font-bold text-slate-900">Gemini Transit AI Assistant</h3>
+            <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+              Ask natural commuter questions: fast vs slow halts, nearest bridge, AC suburban timetable, and Sunday mega block diversions.
+            </p>
+            <button onclick="switchAppTab('ai-assistant')" class="text-xs font-bold text-indigo-700 mt-3 hover:underline">Ask AI Copilot /</button>
+          </div>
+
+          <!-- Feature 6: My Pass & Daily Routine -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 hover:border-emerald-500 transition-all shadow-xs">
+            <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold mb-3">
+              <svg class="w-5 h-5 text-purple-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="20" height="14" x="2" y="5" rx="2"/>
+                <line x1="2" x2="22" y1="10" y2="10"/>
+              </svg>
+            </div>
+            <h3 class="text-sm font-bold text-slate-900">Personalized Pass &amp; Expiry Alarm</h3>
+            <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+              Digital suburban pass tracking with automatic expiry alerts and daily office/work train routine management.
+            </p>
+            <button onclick="switchAppTab('my-personal')" class="text-xs font-bold text-purple-700 mt-3 hover:underline">Manage Pass &amp; Routine /</button>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- TAB 2: JOURNEY PLANNER & TIMETABLE -->
+    <!-- ============================================================ -->
+    <section id="tab-planner" class="app-tab-panel hidden flex-1 py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+      
+      <!-- Primary Planner Bar with Time Input -->
+      <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+          
+          <!-- FROM Station Input -->
+          <div class="md:col-span-4 relative" id="originContainer">
+            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">BOARDING STATION (FROM)</label>
+            <input 
+              type="text" 
+              id="originInput" 
+              autocomplete="off" 
+              placeholder="Select departure station" 
+              class="w-full px-4 py-3 bg-slate-50 focus:bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 transition-all"
+              data-code=""
+              value=""
+            />
+            <div id="originDropdown" class="hidden absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-60 overflow-y-auto z-50 divide-y divide-slate-100"></div>
+          </div>
+
+          <!-- SWAP BUTTON -->
+          <div class="md:col-span-1 flex items-center justify-center my-1 md:my-0">
+            <button 
+              id="swapStationsBtn" 
+              class="w-10 h-10 rounded-full bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 border border-slate-200 flex items-center justify-center shadow-2xs transition-all focus:outline-none"
+              title="Swap Stations"
+            >
+              <svg id="swapIcon" class="w-4 h-4 swap-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- TO Station Input -->
+          <div class="md:col-span-4 relative" id="destContainer">
+            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">DESTINATION STATION (TO)</label>
+            <input 
+              type="text" 
+              id="destInput" 
+              autocomplete="off" 
+              placeholder="Where do you want to alight?" 
+              class="w-full px-4 py-3 bg-slate-50 focus:bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 transition-all"
+              data-code=""
+              value=""
+            />
+            <div id="destDropdown" class="hidden absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-60 overflow-y-auto z-50 divide-y divide-slate-100"></div>
+          </div>
+
+          <!-- DEPARTURE TIME INPUT (Inline alongside Destination) -->
+          <div class="md:col-span-3">
+            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">DEPARTURE TIME</label>
+            <input 
+              type="time" 
+              id="plannerTimeInput" 
+              class="w-full px-4 py-3 bg-slate-50 focus:bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600 transition-all"
+            />
+          </div>
+
+        </div>
+
+        <!-- Filter Segmented Bar -->
+        <div class="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold text-slate-500">Service:</span>
+            <div class="inline-flex p-0.5 bg-slate-100 rounded-lg text-xs font-medium">
+              <button class="pref-type-btn px-3 py-1 rounded-md bg-white text-slate-900 shadow-2xs font-bold" data-type="ALL">All Trains</button>
+              <button class="pref-type-btn px-3 py-1 rounded-md text-slate-600 hover:text-slate-900" data-type="FAST">Fast</button>
+              <button class="pref-type-btn px-3 py-1 rounded-md text-slate-600 hover:text-slate-900" data-type="AC">AC Local</button>
+              <button class="pref-type-btn px-3 py-1 rounded-md text-slate-600 hover:text-slate-900" data-type="SLOW">Slow</button>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button id="findBestTrainBtn" class="px-5 py-2.5 bg-[#064e3b] hover:bg-[#047857] text-white rounded-xl text-xs font-bold tracking-wide shadow-sm transition-all flex items-center gap-2">
+              <svg class="w-4 h-4 text-emerald-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+              </svg>
+              <span id="findBtnLabel">FIND BEST TRAIN</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- INITIAL PROMPT STATE (HIDDEN ONCE USER SEARCHES) -->
+      <div id="plannerInitialEmptyState" class="bg-white border border-slate-200 rounded-3xl p-10 text-center max-w-lg mx-auto shadow-xs">
+        <div class="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-800 flex items-center justify-center mx-auto mb-4">
+          <svg class="w-7 h-7 text-emerald-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="16" height="16" x="4" y="3" rx="2"/>
+            <path d="M4 11h16"/><path d="M12 3v8"/><circle cx="8" cy="15" r="1"/><circle cx="16" cy="15" r="1"/>
+          </svg>
+        </div>
+        <h3 class="text-base font-bold text-slate-900">Select Boarding &amp; Destination Stations</h3>
+        <p class="text-xs text-slate-500 mt-1.5 leading-relaxed max-w-sm mx-auto">
+          Choose your departure and arrival stations above to reveal verified suburban timetables, live crowd predictor, door opening sides, and coach FOB alignment.
+        </p>
+        <div class="mt-5 flex flex-wrap justify-center gap-2">
+          <button onclick="quickPlanRoute('TNA', 'CSMT')" class="px-3 py-1.5 bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 text-xs font-semibold rounded-lg transition-colors">
+            Thane to CSMT
+          </button>
+          <button onclick="quickPlanRoute('KYN', 'DR')" class="px-3 py-1.5 bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 text-xs font-semibold rounded-lg transition-colors">
+            Kalyan to Dadar
+          </button>
+          <button onclick="quickPlanRoute('GC', 'CSMT')" class="px-3 py-1.5 bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 text-xs font-semibold rounded-lg transition-colors">
+            Ghatkopar to CSMT
+          </button>
+        </div>
+      </div>
+
+      <!-- RESULTS SKELETON -->
+      <div id="resultsSkeleton" class="hidden space-y-4">
+        <div class="skeleton-box h-44 rounded-2xl"></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="skeleton-box h-60 rounded-2xl"></div>
+          <div class="skeleton-box h-60 rounded-2xl"></div>
+        </div>
+      </div>
+
+      <!-- RESULTS CONTENT (SHOWN ONLY ON SEARCH) -->
+      <div id="resultsContent" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- Left: Selected Active Train Card + Upcoming Trains (7 Cols) -->
+        <div class="lg:col-span-7 space-y-5">
+          
+          <!-- PINNED ACTIVE TRAIN CARD WITH COMPREHENSIVE INFO & CROWD PREDICTOR -->
+          <div class="bg-white border-2 border-emerald-600 rounded-3xl p-5 shadow-xs relative overflow-hidden" id="selectedActiveTrainCard">
+            
+            <!-- Header bar with status, live delay badge & departure wait -->
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-emerald-50 text-emerald-800 text-[10px] font-bold rounded-md tracking-wider uppercase border border-emerald-200">
+                  ACTIVE SELECTED SERVICE
+                </span>
+                <!-- LIVE DELAY STATUS BADGE -->
+                <span id="recDelayBadge" class="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-300 text-[10px] font-extrabold rounded-md uppercase">
+                  <span id="recDelayDot" class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  <span id="recDelayText">ON TIME</span>
+                </span>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <span id="recExpectedTime" class="hidden text-xs font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200"></span>
+                <span id="recWaitMinutes" class="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200">
+                  Departs soon
+                </span>
+              </div>
+            </div>
+
+            <!-- Times & Trajectory -->
+            <div class="grid grid-cols-7 items-center gap-2 my-2">
+              <div class="col-span-3">
+                <div class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight" id="recDepTime">--:--</div>
+                <div class="text-xs font-bold text-slate-700 mt-0.5" id="recOriginName">Origin</div>
+                <div class="text-[11px] text-slate-400" id="recOriginPlatform">Platform PF --</div>
+              </div>
+
+              <div class="col-span-1 flex flex-col items-center justify-center">
+                <span class="text-[11px] font-bold text-slate-600 whitespace-nowrap mb-1" id="recDuration">-- min</span>
+                <div class="w-full flex items-center">
+                  <div class="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0"></div>
+                  <div class="flex-1 h-0.5 bg-emerald-600"></div>
+                  <div class="w-1.5 h-1.5 rounded-full bg-slate-900 shrink-0"></div>
+                </div>
+                <span class="text-[10px] text-slate-400 mt-1 uppercase font-semibold">Direct</span>
+              </div>
+
+              <div class="col-span-3 text-right">
+                <div class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight" id="recArrTime">--:--</div>
+                <div class="text-xs font-bold text-slate-700 mt-0.5" id="recDestName">Destination</div>
+                <div class="text-[11px] text-slate-400" id="recDestPlatform">Platform PF --</div>
+              </div>
+            </div>
+
+            <!-- MOCK 'LIVE STATUS' REAL-TIME GPS TELEMETRY TICKER -->
+            <div id="trainTelemetryBox" class="mt-3 p-3.5 bg-slate-950 rounded-2xl border border-slate-800 text-white shadow-inner">
+              <div class="flex items-center justify-between pb-2 border-b border-white/10">
+                <div class="flex items-center gap-2">
+                  <span class="relative flex h-2.5 w-2.5">
+                    <span id="telemetryBeaconPing" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span id="telemetryBeaconDot" class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                  </span>
+                  <span class="text-[10px] font-black tracking-widest text-slate-300 uppercase">GPS LIVE TELEMETRY</span>
+                  <span id="telemetryLiveTag" class="text-[9px] font-mono text-emerald-400 bg-emerald-950/80 px-1.5 py-0.2 rounded border border-emerald-500/30">PING ACTIVE</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span id="telemetryStatusBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                    ON TIME
+                  </span>
+                  <button onclick="refreshActiveTrainTelemetry(true)" class="p-1 rounded-lg bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-colors" title="Fetch fresh GPS telemetry ping">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Ticker Stream Content -->
+              <div class="mt-2.5 space-y-1.5 text-xs">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-1.5 font-bold text-slate-200">
+                    <span class="text-amber-400 font-mono">📍</span>
+                    <span id="telemetrySectionText">Section: Cruising on Track 3 Main Fast</span>
+                  </div>
+                  <div class="font-mono font-bold text-emerald-400 text-xs">
+                    <span id="telemetrySpeed">64</span> km/h
+                  </div>
+                </div>
+                <div id="telemetryReasonText" class="text-[11px] text-slate-300 leading-relaxed bg-white/5 p-2 rounded-xl border border-white/5">
+                  Running on time as per Central Railway suburban working timetable (WTT). Signals clear.
+                </div>
+                <div class="flex items-center justify-between text-[10px] text-slate-400 font-mono pt-0.5">
+                  <span id="telemetryGpsCoords">GPS: 19.1620° N, 72.9480° E</span>
+                  <span id="telemetryTimestamp">Telemetry updated: Just now</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- LIVE CROWD PREDICTOR WIDGET (HISTORICAL BOARDING DENSITY) -->
+            <div class="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl" id="crowdPredictorWidget">
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <div class="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                  <svg class="w-4 h-4 text-emerald-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                  </svg>
+                  <span>Live Crowd Predictor:</span>
+                  <span id="crowdStatusBadge" class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    Moderate
+                  </span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] font-semibold text-slate-400" id="crowdPeriodName">Day Schedule</span>
+                  <span class="text-[11px] font-bold text-slate-600" id="crowdOccupancyPct">62% Occupancy</span>
+                </div>
+              </div>
+
+              <!-- Crowd density progress bar -->
+              <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden mb-2.5">
+                <div id="crowdProgressBar" class="h-full bg-emerald-600 rounded-full transition-all duration-500" style="width: 62%;"></div>
+              </div>
+
+              <!-- Compartment-by-Compartment Density Model -->
+              <div class="grid grid-cols-3 sm:grid-cols-6 gap-1.5 my-2 text-[10px]" id="crowdCoachBreakdownGrid">
+                <div class="p-1.5 bg-white border border-slate-200 rounded-lg text-center">
+                  <div class="text-slate-400 font-medium">Coach 1-2</div>
+                  <div class="font-bold text-slate-800" id="coachDensity1">Moderate</div>
+                </div>
+                <div class="p-1.5 bg-white border border-slate-200 rounded-lg text-center">
+                  <div class="text-slate-400 font-medium">Coach 3 (L)</div>
+                  <div class="font-bold text-rose-700" id="coachDensity3">Packed</div>
+                </div>
+                <div class="p-1.5 bg-white border border-slate-200 rounded-lg text-center">
+                  <div class="text-slate-400 font-medium">Coach 5 (I)</div>
+                  <div class="font-bold text-amber-700" id="coachDensity5">Moderate</div>
+                </div>
+                <div class="p-1.5 bg-white border border-slate-200 rounded-lg text-center">
+                  <div class="text-slate-400 font-medium">Coach 7 (L)</div>
+                  <div class="font-bold text-rose-700" id="coachDensity7">Packed</div>
+                </div>
+                <div class="p-1.5 bg-white border border-slate-200 rounded-lg text-center">
+                  <div class="text-slate-400 font-medium">Coach 8-9</div>
+                  <div class="font-bold text-emerald-700" id="coachDensity8">Low</div>
+                </div>
+                <div class="p-1.5 bg-white border border-slate-200 rounded-lg text-center">
+                  <div class="text-slate-400 font-medium">Coach 10-12</div>
+                  <div class="font-bold text-slate-800" id="coachDensity12">Moderate</div>
+                </div>
+              </div>
+
+              <p id="crowdTipText" class="text-[11px] text-slate-600 leading-snug mt-2">
+                Historical boarding density model indicates moderate crowd. Board middle coaches (5 &amp; 8) for relatively faster entry.
+              </p>
+            </div>
+
+            <!-- Action Buttons: Track on Map & Set Alarm -->
+            <div class="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <span class="text-xs font-bold text-slate-900" id="recTrainName">Central Suburban Local</span>
+                <span class="text-slate-400 text-xs">/ Door: </span>
+                <span class="text-xs font-black text-emerald-800" id="recDoorSide">--</span>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button 
+                  id="trackOnMapBtn" 
+                  onclick="trackSelectedTrainOnMap()"
+                  class="px-3.5 py-2 bg-sky-50 text-sky-800 hover:bg-sky-100 border border-sky-200 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
+                >
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/>
+                  </svg>
+                  <span>Track on Map</span>
+                </button>
+
+                <button 
+                  id="armAlarmForThisTrainBtn" 
+                  onclick="armAlarmForSelectedTrain()"
+                  class="px-3.5 py-2 bg-[#064e3b] text-white hover:bg-[#047857] rounded-xl text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5"
+                >
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="13" r="8"/>
+                    <path d="M12 9v4l2 2"/>
+                  </svg>
+                  <span>Set Wake Alarm</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Upcoming Train Schedules List -->
+          <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs">
+            <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+              <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">All Available Train Schedules</h4>
+              <span id="moreOptionsCount" class="text-xs text-slate-400 font-semibold">Click any train to select &amp; track</span>
+            </div>
+            <div id="moreTrainsList" class="divide-y divide-slate-100 max-h-80 overflow-y-auto pr-1"></div>
+          </div>
+
+        </div>
+
+        <!-- Right: Route Halts & Platforms Timeline (5 Cols) -->
+        <div class="lg:col-span-5 space-y-5">
+          <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs">
+            <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+              <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Route Halts &amp; Platforms</h4>
+              <span id="routeTimelineSummary" class="text-xs text-slate-400 font-semibold">6 stops</span>
+            </div>
+
+            <!-- Timeline -->
+            <div class="relative pl-6 py-1 max-h-96 overflow-y-auto" id="routeTimelineContainer">
+              <div class="route-timeline-stem"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- TAB 3: SATELLITE RAILWAY RADAR & LIVE TRACK HUD -->
+    <!-- ============================================================ -->
+    <!-- ============================================================ -->
+    <!-- TAB 3: CENTRAL LINE STATIONS & FACILITIES DIRECTORY MAP -->
+    <!-- ============================================================ -->
+    <section id="tab-satellite" class="app-tab-panel hidden flex-1 py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+      <div class="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-xs flex flex-col h-full space-y-4">
+        
+        <!-- Header Bar with Station Filters and Search -->
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div>
+            <h3 class="text-base sm:text-lg font-extrabold text-slate-900 flex items-center gap-2">
+              <span>Central Railway Stations &amp; Facilities Map</span>
+              <span class="text-[10px] font-extrabold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span>55 STATIONS</span>
+              </span>
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5" id="satelliteSubtext">
+              Click any station on the map to explore platform layout, track schematics, escalators, lifts, medical rooms &amp; amenities.
+            </p>
+          </div>
+
+          <!-- Station Search & Recenter Tools -->
+          <div class="flex items-center gap-2">
+            <!-- Quick Station Search -->
+            <div class="relative w-48 sm:w-64">
+              <input 
+                type="text" 
+                id="mapStationSearchInput" 
+                autocomplete="off" 
+                placeholder="Search station (e.g. Dadar, Thane, Kurla)..." 
+                class="w-full pl-8 pr-3 py-1.5 bg-slate-50 focus:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"
+                oninput="filterMapStationSearch(this.value)"
+                onfocus="filterMapStationSearch(this.value)"
+              />
+              <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+              </svg>
+              <div id="mapStationSearchDropdown" class="hidden absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-56 overflow-y-auto z-40 divide-y divide-slate-100 text-xs"></div>
+            </div>
+
+            <button id="recenterMapBtn" onclick="recenterRouteMap()" class="px-3.5 py-1.5 bg-[#064e3b] hover:bg-[#047857] text-white text-xs font-bold rounded-xl transition-colors shadow-2xs flex items-center gap-1">
+              <svg class="w-3.5 h-3.5 text-emerald-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/><path d="M12 2v3"/><path d="M12 19v3"/><path d="M2 12h3"/><path d="M19 12h3"/>
+              </svg>
+              <span>Recenter</span>
+            </button>
+
+            <!-- Prominent Explore Station Action -->
+            <button id="btnExploreStationPrompt" onclick="openExploreStationPicker()" class="px-3.5 py-1.5 bg-gradient-to-r from-rose-700 to-red-600 hover:from-rose-800 hover:to-red-700 text-white text-xs font-black rounded-xl transition-all shadow-md flex items-center gap-1.5 shrink-0">
+              <span>🔍</span>
+              <span>Explore Station</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Corridor Filter Tabs & View Mode Switcher -->
+        <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <!-- Corridor Filters -->
+          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1">Corridors:</span>
+            <button class="map-corridor-filter px-3 py-1.5 rounded-lg bg-[#064e3b] text-white font-bold shrink-0 shadow-2xs transition-all" data-line="ALL" onclick="filterMapStationsByLine('ALL', this)">All (55 Stations)</button>
+            <button class="map-corridor-filter px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold shrink-0 transition-all" data-line="MAIN" onclick="filterMapStationsByLine('MAIN', this)">Main Line (CSMT - Kalyan)</button>
+            <button class="map-corridor-filter px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold shrink-0 transition-all" data-line="KSRA" onclick="filterMapStationsByLine('KSRA', this)">Kasara Line (North-East)</button>
+            <button class="map-corridor-filter px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold shrink-0 transition-all" data-line="KJT" onclick="filterMapStationsByLine('KJT', this)">Karjat Line (South-East)</button>
+            <button class="map-corridor-filter px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold shrink-0 transition-all" data-line="JUNCTIONS" onclick="filterMapStationsByLine('JUNCTIONS', this)">Major Junctions</button>
+          </div>
+
+          <!-- View Mode Toggle (Track Map vs m-Indicator Route Line) -->
+          <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl shrink-0">
+            <button id="btnViewTrackMap" onclick="switchMapView('map')" class="px-3 py-1 rounded-lg bg-[#064e3b] text-white font-bold text-xs shadow-2xs transition-all flex items-center gap-1">
+              <span>🗺️</span>
+              <span>Track Map</span>
+            </button>
+            <button id="btnViewSchematic" onclick="switchMapView('schematic')" class="px-3 py-1 rounded-lg hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-all flex items-center gap-1">
+              <span>🚇</span>
+              <span>m-Indicator Route Line</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Map Canvas Stack with M-Indicator Station Quick Option and Full Explorer Modal -->
+        <div class="relative w-full flex-1 min-h-[640px] rounded-2xl overflow-hidden border border-slate-200 shadow-inner">
+          
+          <!-- Central Railway Line Active Floating Pill -->
+          <div class="absolute top-3 left-3 z-[1000] bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-200 shadow-md flex items-center gap-2 pointer-events-auto">
+            <span class="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse"></span>
+            <span class="text-xs font-extrabold text-slate-800">Central Railway Line</span>
+            <span class="text-[10px] text-slate-500 font-semibold hidden md:inline">· Click any station on the line to explore</span>
+            <button onclick="openExploreStationPicker()" class="text-[11px] font-extrabold text-rose-700 hover:text-rose-900 bg-rose-50 hover:bg-rose-100 px-2 py-0.5 rounded-lg border border-rose-200 transition-colors flex items-center gap-1">
+              <span>🔍 Explore Station</span>
+            </button>
+          </div>
+
+          <!-- Interactive Google Map Canvas (All 55 Stations connected M-Indicator style) -->
+          <div id="leafletRailwayMap" class="w-full h-full min-h-[640px]"></div>
+
+          <!-- M-INDICATOR VERTICAL LINE DIAGRAM VIEW (Classic m-Indicator Transit Layout) -->
+          <div id="mIndicatorSchematicView" class="hidden absolute inset-0 bg-[#08121d] text-white overflow-y-auto p-4 sm:p-6 z-20">
+            <div class="max-w-2xl mx-auto space-y-4">
+              <div class="flex items-center justify-between pb-3 border-b border-white/10">
+                <div>
+                  <h3 class="text-base font-black text-white flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Central Railway Suburban Network · m-Indicator Schematic</span>
+                  </h3>
+                  <p class="text-xs text-slate-400 mt-0.5">Click "Explore" on any station to view Platform Map, Layout &amp; Facilities</p>
+                </div>
+                <button onclick="switchMapView('map')" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl transition-all">
+                  Switch to Map ➔
+                </button>
+              </div>
+
+              <!-- Station Nodes List populated dynamically -->
+              <div id="mIndicatorStationList" class="relative pl-6 space-y-3.5 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-1.5 before:bg-gradient-to-b before:from-emerald-600 before:via-teal-500 before:to-emerald-800 before:rounded-full"></div>
+            </div>
+          </div>
+
+          <!-- STEP 1: COMPACT M-INDICATOR STATION OPTION PREVIEW BUBBLE (Appears on station click) -->
+          <div id="mapStationQuickPreview" class="hidden absolute bottom-5 left-4 right-4 sm:left-6 sm:right-auto z-[2000] max-w-sm w-full bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-2xl border-2 border-[#881337] text-slate-800 transition-all duration-300">
+            <div class="flex items-start justify-between pb-2 border-b border-slate-100">
+              <div>
+                <div class="flex items-center gap-2">
+                  <h4 class="text-base font-black text-slate-900" id="previewStnName">Thane</h4>
+                  <span class="text-xs font-mono font-extrabold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-300" id="previewStnCode">TNA</span>
+                </div>
+                <div class="text-xs font-semibold text-emerald-800 mt-0.5" id="previewStnMarathi">ठाणे रेल्वे स्थानक</div>
+              </div>
+              <button onclick="closeMapStationQuickPreview()" class="w-6 h-6 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-xs font-bold transition-colors">
+                ✕
+              </button>
+            </div>
+
+            <div class="py-2.5 space-y-1 text-xs">
+              <div class="flex items-center justify-between text-[11px] text-slate-600">
+                <span id="previewStnPf">10 Platforms</span>
+                <span id="previewStnDoor" class="font-bold text-emerald-800">Door: Left &amp; Right</span>
+              </div>
+              <div class="text-[11px] text-slate-500 truncate" id="previewStnCorridor">Central Main Line · 34 km from CSMT</div>
+            </div>
+
+            <!-- Primary Action: Explore Station Details -->
+            <button onclick="openFullStationExplorerFromPreview()" class="w-full py-2.5 px-3 bg-gradient-to-r from-[#064e3b] to-[#047857] hover:from-[#047857] hover:to-[#059669] text-white rounded-xl text-xs font-extrabold shadow-sm transition-all flex items-center justify-center gap-2">
+              <span>🔍 Explore Station (Platform Map, Amenities &amp; Emergency)</span>
+              <span>➔</span>
+            </button>
+
+            <!-- Quick Origin/Dest Buttons -->
+            <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-100">
+              <button onclick="setStationAsOriginFromMap()" class="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-[11px] font-bold transition-colors text-center">
+                Board Here
+              </button>
+              <button onclick="setStationAsDestFromMap()" class="py-1.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-[11px] font-bold transition-colors text-center">
+                Alight Here
+              </button>
+            </div>
+          </div>
+
+          <!-- STEP 2: FULL COMPREHENSIVE STATION EXPLORER MODAL (Opens when user clicks Explore) -->
+          <div id="mapStationInfoCard" class="hidden fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all">
+            <div class="relative w-full max-w-2xl bg-white rounded-3xl p-6 shadow-2xl border border-slate-200 text-slate-800 max-h-[90vh] overflow-y-auto flex flex-col justify-between space-y-4">
+              
+              <!-- Modal Header -->
+              <div class="flex items-start justify-between pb-3 border-b border-slate-100">
+                <div>
+                  <div class="flex items-center gap-2.5 flex-wrap">
+                    <h4 class="text-xl font-black text-slate-900" id="cardStnName">Thane</h4>
+                    <span class="text-sm font-mono font-extrabold px-2.5 py-0.5 rounded-lg bg-emerald-100 text-emerald-900 border border-emerald-300" id="cardStnCode">TNA</span>
+                    <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700" id="cardStnPf">10 Platforms</span>
+                  </div>
+                  <div class="text-sm font-bold text-emerald-800 mt-0.5" id="cardStnMarathi">ठाणे रेल्वे स्थानक</div>
+                  <div class="text-xs text-slate-500 mt-0.5 flex items-center gap-2">
+                    <span id="cardStnCorridor">Central Main &amp; Express Hub</span>
+                    <span>•</span>
+                    <span id="cardStnDist">34.0 km from CSMT</span>
+                  </div>
+                </div>
+                <button onclick="closeMapStationInfoCard()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-sm font-bold transition-colors">
+                  ✕
+                </button>
+              </div>
+
+              <!-- Section 1: Platform Layout & Station Track Schematic -->
+              <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2.5">
+                <div class="flex items-center justify-between text-xs font-extrabold text-slate-900">
+                  <div class="flex items-center gap-1.5">
+                    <span>🚉</span>
+                    <span>Platform Track Layout &amp; Door Opening Schematic</span>
+                  </div>
+                  <span class="text-[10px] text-emerald-800 font-extrabold px-2 py-0.5 bg-emerald-50 rounded-md border border-emerald-200" id="cardStnDoorBadge">Door: Left &amp; Right</span>
+                </div>
+
+                <!-- Python Generated SVG Station Map Schematic -->
+                <div id="cardStationSvgMapBox" class="w-full overflow-x-auto rounded-xl"></div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs" id="cardTrackSchematicList">
+                  <!-- Dynamically populated track schematic -->
+                  <div class="p-2.5 bg-white rounded-xl border border-slate-200">
+                    <div class="font-bold text-slate-900">PF 1 &amp; 2: <span class="text-slate-600 font-normal">DOWN Slow (Kalyan)</span></div>
+                    <div class="text-[10px] text-emerald-700 font-semibold mt-0.5">Door Left</div>
+                  </div>
+                </div>
+
+                <!-- Foot Overbridges Layout -->
+                <div class="pt-2 border-t border-slate-200 text-xs text-slate-600" id="cardFobLayout">
+                  <strong>Bridges &amp; Skywalks:</strong> Main FOB, North Bridge &amp; South SATIS Bus Skywalk.
+                </div>
+              </div>
+
+              <!-- Section 2: All Commuter Amenities & Facilities -->
+              <div class="space-y-2">
+                <div class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <span>🏢</span>
+                  <span>Station Facilities &amp; Amenities</span>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+                  <!-- Lifts & Escalators -->
+                  <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div class="text-slate-400 font-bold uppercase text-[9px] flex items-center gap-1">
+                      <span>🛗</span>
+                      <span>Lifts &amp; Escalators</span>
+                    </div>
+                    <div class="text-xs font-bold text-slate-800 mt-1">
+                      <span id="cardStnEscalators">6</span> Escalators · <span id="cardStnLifts">3</span> Lifts
+                    </div>
+                    <div class="text-[10px] text-slate-500 mt-0.5" id="cardEscalatorLocations">PF 1, 3/4, 5/6 &amp; Main FOB</div>
+                  </div>
+
+                  <!-- Ticketing & ATVMs -->
+                  <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div class="text-slate-400 font-bold uppercase text-[9px] flex items-center gap-1">
+                      <span>🎫</span>
+                      <span>Ticketing &amp; ATVMs</span>
+                    </div>
+                    <div class="text-xs font-bold text-slate-800 mt-1" id="cardTicketSummary">
+                      12 Windows · 16 ATVMs
+                    </div>
+                    <div class="text-[10px] text-slate-500 mt-0.5">UTS Mobile &amp; Yatri Kiosks</div>
+                  </div>
+
+                  <!-- Drinking Water -->
+                  <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div class="text-slate-400 font-bold uppercase text-[9px] flex items-center gap-1">
+                      <span>💧</span>
+                      <span>Drinking Water</span>
+                    </div>
+                    <div class="text-xs font-bold text-slate-800 mt-1" id="cardWaterSummary">
+                      <span id="cardStnWater">6</span> Water ATMs (₹1/₹2)
+                    </div>
+                    <div class="text-[10px] text-slate-500 mt-0.5">RO Coolers on all platforms</div>
+                  </div>
+
+                  <!-- Sanitation & Waiting Rooms -->
+                  <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100 col-span-2 sm:col-span-1">
+                    <div class="text-slate-400 font-bold uppercase text-[9px] flex items-center gap-1">
+                      <span>🚻</span>
+                      <span>Washrooms &amp; Lounges</span>
+                    </div>
+                    <div class="text-xs font-bold text-slate-800 mt-1" id="cardSanitationSummary">
+                      Pay &amp; Use Washrooms
+                    </div>
+                    <div class="text-[10px] text-slate-500 mt-0.5" id="cardWaitingRoomSummary">Ladies &amp; AC Lounge</div>
+                  </div>
+
+                  <!-- Feeder Interchanges -->
+                  <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100 col-span-2">
+                    <div class="text-slate-400 font-bold uppercase text-[9px] flex items-center gap-1">
+                      <span>🔄</span>
+                      <span>Interchanges &amp; Feeder Transport</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 flex-wrap mt-1 text-xs" id="cardStnInterchanges"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section 3: EMERGENCY NUMBERS & COMMUTER HELP DESK -->
+              <div class="p-4 bg-rose-50/60 rounded-2xl border border-rose-200/80 space-y-2.5">
+                <div class="flex items-center justify-between text-xs font-black text-rose-950">
+                  <div class="flex items-center gap-1.5">
+                    <span>🚨</span>
+                    <span>Emergency Numbers &amp; Commuter Help Desk</span>
+                  </div>
+                  <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-rose-100 text-rose-800">24x7 ACTIVE</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  <!-- Railway Helpline 139 -->
+                  <div class="p-2.5 bg-white rounded-xl border border-rose-100 flex items-center justify-between">
+                    <div>
+                      <div class="text-[10px] font-bold text-slate-400 uppercase">Indian Railways Emergency</div>
+                      <div class="font-extrabold text-slate-900 text-sm">Dial 139</div>
+                    </div>
+                    <span class="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-800 font-bold text-[11px]">Toll-Free</span>
+                  </div>
+
+                  <!-- Women Safety 1512 -->
+                  <div class="p-2.5 bg-white rounded-xl border border-rose-100 flex items-center justify-between">
+                    <div>
+                      <div class="text-[10px] font-bold text-slate-400 uppercase">Women Commuter Safety</div>
+                      <div class="font-extrabold text-slate-900 text-sm">Dial 1512 / 1090</div>
+                    </div>
+                    <span class="px-2 py-1 rounded-lg bg-purple-50 text-purple-800 font-bold text-[11px]">RPF/GRP</span>
+                  </div>
+
+                  <!-- Medical Emergency & Ambulance -->
+                  <div class="p-2.5 bg-white rounded-xl border border-rose-100 col-span-1 sm:col-span-2">
+                    <div class="text-[10px] font-bold text-slate-400 uppercase">Emergency Medical Room (EMR) &amp; Ambulance</div>
+                    <div class="font-bold text-slate-800 mt-0.5" id="cardMedicalSummary">
+                      Emergency Medical Room (One Rupee Clinic) at Platform 1
+                    </div>
+                    <div class="text-[10px] text-slate-500 mt-0.5">108 Emergency Ambulance linked · Wheelchair &amp; Stretcher at Station Master Office</div>
+                  </div>
+
+                  <!-- Police Post & GRP -->
+                  <div class="p-2.5 bg-white rounded-xl border border-rose-100 col-span-1 sm:col-span-2">
+                    <div class="flex items-center justify-between">
+                      <div class="text-[10px] font-bold text-slate-400 uppercase">Police & Security Contacts</div>
+                      <span class="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">RPF / GRP</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1.5">
+                      <div class="p-1.5 bg-slate-50 rounded-lg">
+                        <div class="text-[9px] font-bold text-slate-400">RPF POST TEL</div>
+                        <div class="font-extrabold text-slate-900 text-xs mt-0.5" id="cardRpfPhone">022-22620173</div>
+                      </div>
+                      <div class="p-1.5 bg-slate-50 rounded-lg">
+                        <div class="text-[9px] font-bold text-slate-400">GRP THANA TEL</div>
+                        <div class="font-extrabold text-slate-900 text-xs mt-0.5" id="cardGrpPhone">1512 / GRP Thana</div>
+                      </div>
+                    </div>
+                    <div class="text-[10px] text-slate-500 mt-1" id="cardPoliceSummary">
+                      RPF Help Post &amp; GRP Railway Police Thana
+                    </div>
+                  </div>
+
+                  <!-- Station Master & Divyangjan Help Desk -->
+                  <div class="p-2.5 bg-white rounded-xl border border-rose-100 col-span-1 sm:col-span-2">
+                    <div class="flex items-center justify-between">
+                      <div class="text-[10px] font-bold text-slate-400 uppercase">Station Master & Divyangjan Help Desk</div>
+                      <span class="text-[10px] text-blue-700 font-bold bg-blue-50 px-1.5 py-0.5 rounded">SM Desk</span>
+                    </div>
+                    <div class="font-bold text-slate-900 text-xs mt-1" id="cardSmPhone">
+                      Station Master Office (PF 1): 24x7 Assistance
+                    </div>
+                    <div class="text-[10px] text-slate-500 mt-0.5" id="cardDivyangjanSummary">
+                      Wheelchair, Stretcher &amp; Ramp assistance available at Station Master Office
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Gemini Station Copilot Tool -->
+              <div class="pt-2 border-t border-slate-100">
+                <button id="cardGeminiAskBtn" onclick="askGeminiAboutCardStation()" class="w-full py-2.5 px-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl text-xs font-bold shadow-2xs transition-all flex items-center justify-center gap-1.5">
+                  <svg class="w-3.5 h-3.5 text-amber-300" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                  </svg>
+                  <span id="cardGeminiBtnText">Ask Gemini Station Copilot</span>
+                </button>
+                <div id="cardGeminiAiResponse" class="hidden mt-2 p-2.5 bg-blue-50/80 border border-blue-200/90 rounded-xl text-[11px] text-blue-950 leading-relaxed max-h-40 overflow-y-auto shadow-inner"></div>
+              </div>
+
+              <!-- Quick Route Buttons inside Modal -->
+              <div class="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100">
+                <button onclick="setStationAsOriginFromMap()" class="py-2.5 px-3 bg-[#064e3b] hover:bg-[#047857] text-white rounded-xl text-xs font-bold shadow-2xs transition-colors text-center">
+                  Board Here (From)
+                </button>
+                <button onclick="setStationAsDestFromMap()" class="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition-colors text-center">
+                  Alight Here (To)
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Bottom Telemetry Legend Pill -->
+          <div class="absolute bottom-4 right-4 z-20 hidden md:flex items-center gap-3 px-3 py-1.5 bg-[#07131e]/85 backdrop-blur-md border border-white/15 rounded-xl text-[10px] text-slate-300 shadow-lg pointer-events-none">
+            <span class="flex items-center gap-1">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#047857] border border-white"></span>
+              <span>Junction</span>
+            </span>
+            <span class="flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-[#38bdf8]"></span>
+              <span>Suburban Halt</span>
+            </span>
+            <span class="flex items-center gap-1">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#fbbf24] animate-pulse"></span>
+              <span>Active Train</span>
+            </span>
+            <span class="flex items-center gap-1">
+              <span class="w-4 h-1 bg-[#10b981] rounded"></span>
+              <span>Live Track</span>
+            </span>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- TAB 4: COMMUTER HELPDESK SUITE (FARES, COACH, DOORS, AMENITIES) -->
+    <!-- ============================================================ -->
+    <section id="tab-commuter-suite" class="app-tab-panel hidden flex-1 py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+      
+      <!-- Commuter Suite Internal Sub-Nav -->
+      <div class="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl mb-6 text-xs font-bold text-slate-600">
+        <button class="commuter-subtab-btn px-3.5 py-2 rounded-xl transition-all bg-white text-slate-900 shadow-xs" data-subtab="fares">
+          Fare &amp; Season Pass Matrix
+        </button>
+        <button class="commuter-subtab-btn px-3.5 py-2 rounded-xl transition-all hover:text-slate-900" data-subtab="coach">
+          12/15-Car Coach &amp; FOB Proximity
+        </button>
+        <button class="commuter-subtab-btn px-3.5 py-2 rounded-xl transition-all hover:text-slate-900" data-subtab="doors">
+          Door Opening Side Guide
+        </button>
+        <button class="commuter-subtab-btn px-3.5 py-2 rounded-xl transition-all hover:text-slate-900" data-subtab="amenities">
+          Station Amenities Directory
+        </button>
+      </div>
+
+      <!-- SUBTAB 1: FARES & SEASON PASS MATRIX -->
+      <div id="subtab-fares" class="commuter-panel bg-white border border-slate-200 rounded-3xl p-6 shadow-xs max-w-3xl mx-auto">
+        <h3 class="text-base font-bold text-slate-900 mb-1">Suburban Fare &amp; Season Pass Matrix</h3>
+        <p class="text-xs text-slate-500 mb-6">Calculate official Central Railway ticket and pass rates based on exact distance slabs.</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Origin Station:</label>
+            <select id="fareCalcOriginSelect" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Destination Station:</label>
+            <select id="fareCalcDestSelect" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800"></select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center" id="customFareResultGrid"></div>
+      </div>
+
+      <!-- SUBTAB 2: COACH POSITION & FOB PROXIMITY -->
+      <div id="subtab-coach" class="commuter-panel hidden bg-white border border-slate-200 rounded-3xl p-6 shadow-xs">
+        <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-100">
+          <div>
+            <h3 class="text-base font-bold text-slate-900">12-Car Suburban Rake Coach Composition</h3>
+            <p class="text-xs text-slate-500 mt-0.5">Official compartment breakdown from Motorman Cabin (Front) to Guard Cabin (Rear).</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-slate-700">Direction:</span>
+            <span class="text-xs bg-emerald-50 text-emerald-800 px-2.5 py-1 rounded-md font-bold">UP (Towards CSMT) / DOWN</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2.5" id="coachRakeGrid"></div>
+
+        <div class="mt-4 p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-start gap-2">
+          <span class="font-bold">FOB Proximity Tip:</span>
+          <span>At Dadar and Thane, Coach 5 &amp; Coach 7 align directly with the main foot-over-bridge for the quickest platform exit.</span>
+        </div>
+      </div>
+
+      <!-- SUBTAB 3: DOOR OPENING SIDE GUIDE -->
+      <div id="subtab-doors" class="commuter-panel hidden bg-white border border-slate-200 rounded-3xl p-6 shadow-xs">
+        <div class="pb-3 mb-4 border-b border-slate-100">
+          <h3 class="text-base font-bold text-slate-900">Platform Door Opening Side Guide (Left / Right)</h3>
+          <p class="text-xs text-slate-500 mt-0.5">Know in advance which side your compartment doors open to avoid rush hour bottlenecks.</p>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 max-h-96 overflow-y-auto pr-1" id="doorSideDirectoryGrid"></div>
+      </div>
+
+      <!-- SUBTAB 4: STATION AMENITIES & FACILITIES -->
+      <div id="subtab-amenities" class="commuter-panel hidden bg-white border border-slate-200 rounded-3xl p-6 shadow-xs">
+        <div class="pb-3 mb-4 border-b border-slate-100">
+          <h3 class="text-base font-bold text-slate-900">Central Railway Station Amenities Directory</h3>
+          <p class="text-xs text-slate-500 mt-0.5">Verified escalators, lifts, Water ATMs, ATVM kiosks, and emergency posts across stations.</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 max-h-96 overflow-y-auto pr-1" id="stationAmenitiesGrid"></div>
+      </div>
+
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- TAB 5: MY PERSONAL COMMUTE & TICKET PASS TRACKER -->
+    <!-- ============================================================ -->
+    <section id="tab-my-personal" class="app-tab-panel hidden flex-1 py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+      <div class="space-y-6">
+
+        <!-- Active Pass Tracking Card -->
+        <div class="bg-gradient-to-br from-[#07131e] via-[#0b1f2e] to-[#047857] text-white rounded-3xl p-6 shadow-xl border border-emerald-500/30">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span class="text-xs uppercase font-extrabold tracking-widest text-emerald-200">CENTRAL RAILWAY SUBURBAN PASS WALLET</span>
+            </div>
+            <span class="px-2.5 py-0.5 bg-white/10 rounded-full text-xs font-bold border border-white/20" id="passExpiryBadge">
+              Active Pass
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 my-2">
+            <div>
+              <div class="text-[10px] text-emerald-200 uppercase font-semibold">Commute Corridor</div>
+              <div class="text-xl font-black text-white mt-0.5" id="userPassCorridor">Thane to CSMT</div>
+              <div class="text-xs text-emerald-200/80" id="userPassClassLabel">First Class Monthly Suburban Pass</div>
+            </div>
+
+            <div>
+              <div class="text-[10px] text-emerald-200 uppercase font-semibold">Validity Countdown</div>
+              <div class="text-xl font-black text-amber-300 mt-0.5" id="userPassCountdown">4 Days Remaining</div>
+              <div class="text-xs text-emerald-200/80">Valid until: <span id="userPassExpiryDate">Oct 7, 2026</span></div>
+            </div>
+
+            <div class="flex flex-col justify-end gap-2">
+              <button onclick="togglePassEditModal()" class="px-3.5 py-2 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-bold border border-white/20 transition-colors">
+                Edit / Renew Pass Details
+              </button>
+              <button onclick="testPassAlarmSound()" class="px-3.5 py-1.5 bg-emerald-600/40 hover:bg-emerald-600/60 text-emerald-200 rounded-xl text-[11px] font-semibold transition-colors">
+                Test Expiry Alarm Chime
+              </button>
+            </div>
+          </div>
+
+          <!-- Validity progress bar -->
+          <div class="w-full h-1.5 bg-white/20 rounded-full overflow-hidden mt-4">
+            <div id="passProgressBar" class="h-full bg-emerald-400 rounded-full transition-all duration-500" style="width: 75%;"></div>
+          </div>
+        </div>
+
+        <!-- Daily Office / Work Train Routine Manager -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs">
+          <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
+            <div>
+              <h3 class="text-base font-bold text-slate-900">Daily Work &amp; Office Commute Routine</h3>
+              <p class="text-xs text-slate-500 mt-0.5">Your pinned morning work train and evening return service with 1-click alarm activation.</p>
+            </div>
+            <button onclick="openRoutineEditModal()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-bold transition-colors">
+              Edit Routine
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Morning Train -->
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+              <div class="text-[10px] font-bold text-emerald-800 uppercase tracking-wide">Morning Office Local</div>
+              <div class="text-lg font-black text-slate-900 mt-1" id="morningOfficeTrainTime">08:32 AM · Thane to Dadar</div>
+              <p class="text-xs text-slate-500 mt-0.5" id="morningOfficeTrainDetails">Fast Local · 12-Car Rake · Arrives 09:05 AM</p>
+              <div class="mt-3 flex items-center gap-2">
+                <button onclick="armAlarmForMorningRoutine()" class="px-3 py-1.5 bg-[#064e3b] text-white rounded-lg text-xs font-bold hover:bg-[#047857] transition-colors">
+                  Set Morning Alarm
+                </button>
+                <button onclick="quickPlanRoute('TNA', 'DR')" class="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-200 transition-colors">
+                  View Timetable
+                </button>
+              </div>
+            </div>
+
+            <!-- Evening Train -->
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+              <div class="text-[10px] font-bold text-emerald-800 uppercase tracking-wide">Evening Return Local</div>
+              <div class="text-lg font-black text-slate-900 mt-1" id="eveningOfficeTrainTime">06:45 PM · Dadar to Thane</div>
+              <p class="text-xs text-slate-500 mt-0.5" id="eveningOfficeTrainDetails">Fast Local · 12-Car Rake · Arrives 07:18 PM</p>
+              <div class="mt-3 flex items-center gap-2">
+                <button onclick="armAlarmForEveningRoutine()" class="px-3 py-1.5 bg-[#064e3b] text-white rounded-lg text-xs font-bold hover:bg-[#047857] transition-colors">
+                  Set Evening Alarm
+                </button>
+                <button onclick="quickPlanRoute('DR', 'TNA')" class="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-200 transition-colors">
+                  View Timetable
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Personal Commute Notes & Seat Preferences -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs">
+          <h3 class="text-base font-bold text-slate-900 mb-1">Personalized Commuter Notes &amp; Seat Preferences</h3>
+          <p class="text-xs text-slate-500 mb-4">Keep quick personal tips like preferred coach gates, FOB exits, or companion seat routines.</p>
+          <textarea 
+            id="personalCommuteNotes" 
+            rows="3" 
+            placeholder="e.g. Coach 5 aligns right at Dadar middle staircase. Enter from Thane platform 5 north end."
+            class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+          ></textarea>
+          <div class="mt-2 text-right">
+            <button onclick="savePersonalNotes()" class="px-4 py-1.5 bg-[#064e3b] hover:bg-[#047857] text-white rounded-lg text-xs font-bold transition-colors">
+              Save Notes
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- TAB 6: SPEEDOMETER & WAKE ALARM (ADVANCED UI & SIMULATION) -->
+    <!-- ============================================================ -->
+    <section id="tab-speedometer" class="app-tab-panel hidden flex-1 py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Live GPS Speedometer Section -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs flex flex-col items-center justify-center text-center">
+          <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">ONBOARD GPS TELEMETRY</div>
+          
+          <!-- State 1: Location Not Yet Enabled Prompt -->
+          <div id="gpsPromptCard" class="my-4 py-6 px-4 flex flex-col items-center">
+            <div class="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-800 flex items-center justify-center mb-3">
+              <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+              </svg>
+            </div>
+            <h4 class="text-sm font-bold text-slate-900">Live Speedometer Requires Location</h4>
+            <p class="text-xs text-slate-500 mt-1 max-w-xs leading-relaxed">
+              Enable device location access to activate real-time km/h telemetry and train tracking.
+            </p>
+            <div class="mt-4 flex flex-col sm:flex-row gap-2">
+              <button id="activateGpsBtn" class="px-5 py-2.5 bg-[#064e3b] hover:bg-[#047857] text-white rounded-xl text-xs font-bold transition-colors">
+                Enable Location
+              </button>
+              <button onclick="startRideSimulation()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors">
+                Simulate Live Train Ride
+              </button>
+            </div>
+          </div>
+
+          <!-- State 2: Location Denied Notice -->
+          <div id="gpsDeniedCard" class="hidden my-4 py-6 px-4 bg-rose-50 border border-rose-200 rounded-2xl text-center max-w-xs">
+            <div class="text-rose-700 font-bold text-xs">Location Access Denied</div>
+            <p class="text-[11px] text-rose-600 mt-1">
+              Location permissions are currently disabled in your browser. You can still test using simulation:
+            </p>
+            <div class="mt-3 flex gap-2 justify-center">
+              <button onclick="requestSpeedometerGps()" class="px-3 py-1.5 bg-rose-700 text-white rounded-lg text-xs font-bold">
+                Try Again
+              </button>
+              <button onclick="startRideSimulation()" class="px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-bold">
+                Simulate Ride
+              </button>
+            </div>
+          </div>
+
+          <!-- State 3: Active Speed Dial & Circular Precision Gauge -->
+          <div id="gpsActiveDialCard" class="hidden flex flex-col items-center w-full">
+            
+            <div class="relative w-52 h-52 flex items-center justify-center my-3">
+              <!-- SVG Speedometer Dial -->
+              <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="42" stroke="#f1f5f9" stroke-width="8" fill="transparent"/>
+                <circle id="speedometerGaugeCircle" class="gauge-dial-circle" cx="50" cy="50" r="42" stroke="#047857" stroke-width="8" stroke-linecap="round" fill="transparent"/>
+              </svg>
+              
+              <!-- Center Readout -->
+              <div class="absolute flex flex-col items-center justify-center text-center">
+                <span id="speedValue" class="text-5xl font-black text-slate-900 tracking-tight leading-none">0</span>
+                <span class="text-[11px] font-bold text-slate-400 uppercase mt-1">KM / H</span>
+                <span id="speedSubtext" class="text-[10px] text-emerald-700 font-semibold mt-0.5">Cruising</span>
+              </div>
+            </div>
+
+            <!-- Current Traversed & Next Station Telemetry -->
+            <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-left w-full max-w-sm my-2 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-slate-400 font-medium">Last Station Passed:</span>
+                <strong class="text-slate-800 font-bold" id="telemetryCurrentStn">Thane (TNA)</strong>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-slate-400 font-medium">Next Station Halt:</span>
+                <strong class="text-emerald-800 font-bold" id="telemetryNextStn">Mulund · PF 2 · ETA 3m</strong>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-slate-400 font-medium">Target Destination:</span>
+                <strong class="text-slate-800 font-bold" id="telemetryTargetStn">CSMT (34.0 km)</strong>
+              </div>
+            </div>
+
+            <div class="text-xs text-slate-500 mb-3" id="gpsStatusText">Tracking live onboard velocity...</div>
+            
+            <div class="flex items-center gap-2">
+              <button id="stopGpsBtn" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors">
+                Pause Tracking
+              </button>
+              <button onclick="testAlarmChimeSound()" class="px-4 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-xl text-xs font-bold transition-colors">
+                Test Wake Chime
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Destination Geofenced Wake Alarm -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs">
+          <div class="flex items-center gap-2 mb-2">
+            <svg class="w-5 h-5 text-emerald-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/>
+            </svg>
+            <h3 class="text-sm font-bold text-slate-900">Destination Geofenced Wake Alarm</h3>
+          </div>
+          <p class="text-xs text-slate-500 mb-4 leading-relaxed">
+            Never miss your stop while sleeping or reading. CentralSaathi monitors distance and sounds an alert prior to arrival.
+          </p>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Target Station (Only Stations on Selected Route):</label>
+              <select id="alarmStationSelect" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800"></select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Trigger Distance Prior to Station:</label>
+              <select id="alarmDistanceSelect" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800">
+                <option value="0.8">0.8 km before station</option>
+                <option value="1.5" selected>1.5 km before station (Recommended)</option>
+                <option value="2.5">2.5 km before station</option>
+              </select>
+            </div>
+
+            <div class="pt-2">
+              <button id="armWakeAlarmBtn" class="w-full py-3 bg-[#064e3b] hover:bg-[#047857] text-white rounded-xl text-xs font-bold tracking-wide transition-colors">
+                ARM DESTINATION WAKE ALARM
+              </button>
+            </div>
+
+            <!-- Alarm active status pill -->
+            <div id="alarmActiveStatus" class="hidden p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center justify-between">
+              <span>Wake alarm is ACTIVE for <strong id="activeAlarmTarget">Dadar</strong></span>
+              <button onclick="disarmWakeAlarm()" class="text-xs font-bold text-rose-700 hover:underline">Disarm</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- TAB 7: MEGA BLOCKS & OPERATIONAL NOTICES -->
+    <!-- ============================================================ -->
+    <section id="tab-blocks" class="app-tab-panel hidden flex-1 py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+      <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs">
+        <h3 class="text-base font-bold text-slate-900 mb-1">Central Railway Mega Blocks &amp; Speed Bulletins</h3>
+        <p class="text-xs text-slate-500 mb-6">Official maintenance notifications issued by Central Railway Mumbai Division.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="tabBulletinsList"></div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- TAB 8: ADVANCED SAFETY SOS & EMERGENCY DIRECTORY -->
+    <!-- ============================================================ -->
+    <section id="tab-sos" class="app-tab-panel hidden flex-1 py-6 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full">
+      <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="w-3 h-3 rounded-full bg-rose-600 animate-pulse"></span>
+          <h3 class="text-base font-bold text-rose-800">Railway Safety &amp; Emergency SOS Console</h3>
+        </div>
+        <p class="text-xs text-slate-500 mb-6">Immediate safety deterrents and direct hotlines connected to on-duty Railway Protection Force and Government Railway Police.</p>
+
+        <!-- SOS Quick Actions: Whistle Siren & WhatsApp/SMS Location Broadcast -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <!-- Whistle / Siren Alarm -->
+          <div class="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex flex-col justify-between">
+            <div>
+              <div class="text-xs font-bold text-rose-900 uppercase tracking-wide">High-Decibel Deterrent</div>
+              <div class="text-base font-black text-rose-950 mt-1">Emergency Siren Whistle</div>
+              <p class="text-[11px] text-rose-700 mt-1 leading-relaxed">
+                Emits an intense high-frequency acoustic alert to deter harassers and immediately attract platform security attention.
+              </p>
+            </div>
+            <button 
+              id="sosSirenBtn" 
+              onclick="toggleEmergencySiren()" 
+              class="mt-4 py-2.5 px-4 bg-rose-700 hover:bg-rose-800 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2"
+            >
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+              </svg>
+              <span id="sirenBtnLabel">START EMERGENCY SIREN</span>
+            </button>
+          </div>
+
+          <!-- Broadcast Live GPS Location via WhatsApp / SMS -->
+          <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex flex-col justify-between">
+            <div>
+              <div class="text-[10px] font-bold text-emerald-900 uppercase tracking-wide">Instant SOS Broadcast</div>
+              <div class="text-base font-black text-emerald-950 mt-1">Send Live GPS to Family</div>
+              <p class="text-[11px] text-emerald-800 mt-1 leading-relaxed">
+                Sends your live coordinates, nearest station, and time in a pre-formatted emergency message via WhatsApp or SMS.
+              </p>
+            </div>
+            <button 
+              onclick="broadcastEmergencyLocation()" 
+              class="mt-4 py-2.5 px-4 bg-[#064e3b] hover:bg-[#047857] text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2"
+            >
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+              </svg>
+              <span>BROADCAST LIVE LOCATION</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Emergency Hotlines Direct Call Links -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <a href="tel:139" class="p-4 bg-rose-50 border border-rose-200 rounded-2xl hover:bg-rose-100 transition-all flex flex-col items-center text-center">
+            <span class="text-2xl font-black text-rose-800">139</span>
+            <span class="text-xs font-bold text-rose-900 mt-1">RPF Security Helpline</span>
+            <span class="text-[10px] text-rose-600 mt-0.5">24x7 Pan-India Assistance</span>
+          </a>
+
+          <a href="tel:1512" class="p-4 bg-blue-50 border border-blue-200 rounded-2xl hover:bg-blue-100 transition-all flex flex-col items-center text-center">
+            <span class="text-2xl font-black text-blue-800">1512</span>
+            <span class="text-xs font-bold text-blue-900 mt-1">Mumbai GRP Helpline</span>
+            <span class="text-[10px] text-blue-600 mt-0.5">Suburban Police Control Room</span>
+          </a>
+
+          <a href="tel:1090" class="p-4 bg-purple-50 border border-purple-200 rounded-2xl hover:bg-purple-100 transition-all flex flex-col items-center text-center">
+            <span class="text-2xl font-black text-purple-800">1090</span>
+            <span class="text-xs font-bold text-purple-900 mt-1">Women Safety Helpline</span>
+            <span class="text-[10px] text-purple-600 mt-0.5">Dedicated Suburban Escorts</span>
+          </a>
+        </div>
+
+        <!-- Women's Night Escort Coach Info -->
+        <div class="p-4 bg-amber-50 border border-amber-200 rounded-2xl mb-6 text-xs text-amber-900">
+          <div class="font-bold flex items-center gap-1.5 mb-1">
+            <svg class="w-4 h-4 text-amber-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
+            </svg>
+            <span>Night Escort Security in Ladies Coaches (8:00 PM to 6:00 AM)</span>
+          </div>
+          <p class="leading-relaxed text-amber-800">
+            Armed RPF/GRP police personnel are posted in <strong>Coach 3 (Middle Ladies)</strong> and <strong>Coach 12 (Guard End Ladies)</strong> on all suburban services running between 8:00 PM and 6:00 AM.
+          </p>
+        </div>
+
+        <div class="text-xs font-bold text-slate-700 mb-3">Key Junction Station Master &amp; RPF Direct Lines:</div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+          <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+            <div class="font-bold text-slate-800">CSMT RPF Post</div>
+            <a href="tel:02222620173" class="text-emerald-800 font-semibold hover:underline">022-22620173</a>
+          </div>
+          <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+            <div class="font-bold text-slate-800">Dadar RPF Post</div>
+            <a href="tel:02224144888" class="text-emerald-800 font-semibold hover:underline">022-24144888</a>
+          </div>
+          <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+            <div class="font-bold text-slate-800">Thane RPF Post</div>
+            <a href="tel:02225333033" class="text-emerald-800 font-semibold hover:underline">022-25333033</a>
+          </div>
+          <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+            <div class="font-bold text-slate-800">Kalyan RPF Post</div>
+            <a href="tel:02512315355" class="text-emerald-800 font-semibold hover:underline">0251-2315355</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- TAB 9: GEMINI TRANSIT AI COPILOT -->
+    <!-- ============================================================ -->
+    <section id="tab-ai-assistant" class="app-tab-panel hidden flex-1 py-6 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full">
+      <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs flex flex-col h-full min-h-[500px]">
+        
+        <div class="flex items-center gap-3 pb-3 mb-4 border-b border-slate-100">
+          <div class="w-10 h-10 rounded-2xl bg-[#064e3b] text-white flex items-center justify-center font-bold">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2v4"/><path d="M12 18v4"/><path d="m4.93 4.93 2.83 2.83"/><path d="m16.24 16.24 2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="m4.93 19.07 2.83-2.83"/><path d="m16.24 7.76 2.83-2.83"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900">Gemini Transit AI Copilot</h3>
+            <p class="text-xs text-slate-500">Ask any commuter question about Central Railway timetables, halts, or coaches.</p>
+          </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto space-y-3 mb-4 p-3 bg-slate-50 rounded-2xl border border-slate-100 text-xs" id="aiChatStream">
+          <div class="p-3 bg-white border border-slate-200 rounded-2xl max-w-md shadow-2xs">
+            <div class="font-bold text-emerald-800 mb-1">CentralSaathi AI Copilot</div>
+            <p class="text-slate-700 leading-relaxed">
+              Hello! I'm your Central Railway transit intelligence assistant. You can ask me questions like:
+              <br/>• "What is the difference between fast and slow local to Kalyan?"
+              <br/>• "Which coach is closest to the footbridge at Dadar?"
+              <br/>• "Will the 08:32 AM AC local halt at Nahur?"
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-1.5 mb-3">
+          <button onclick="sendQuickAiPrompt('Which coach is closest to the FOB at Dadar?')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-semibold">
+            Dadar FOB coach position?
+          </button>
+          <button onclick="sendQuickAiPrompt('Are there Sunday mega blocks between Matunga and Mulund?')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-semibold">
+            Sunday mega blocks schedule?
+          </button>
+          <button onclick="sendQuickAiPrompt('What is the fare for AC local from Thane to CSMT?')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-semibold">
+            AC Local Thane to CSMT fare?
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input 
+            type="text" 
+            id="aiInputText" 
+            placeholder="Type your transit question..." 
+            class="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+            onkeydown="if(event.key==='Enter') submitAiQuery();"
+          />
+          <button 
+            id="aiSendBtn" 
+            onclick="submitAiQuery()" 
+            class="px-5 py-3 bg-[#064e3b] hover:bg-[#047857] text-white rounded-xl text-xs font-bold transition-colors"
+          >
+            Ask AI
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============================================================== -->
+  <!-- MODAL: EDIT USER PASS DETAILS -->
+  <!-- ============================================================== -->
+  <div id="passEditModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+      <h3 class="text-base font-bold text-slate-900 mb-1">Update Suburban Pass Information</h3>
+      <p class="text-xs text-slate-500 mb-4">Set your active UTS pass validity to trigger automatic expiry alarms.</p>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Pass Corridor (From - To):</label>
+          <input type="text" id="modalPassCorridorInput" value="Thane to CSMT" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Pass Expiry Date:</label>
+          <input type="date" id="modalPassExpiryInput" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Class:</label>
+          <select id="modalPassClassInput" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold">
+            <option value="First Class">First Class (I)</option>
+            <option value="Second Class">Second Class (II)</option>
+            <option value="AC Suburban">AC Suburban (Air-Conditioned)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mt-5 flex gap-2">
+        <button onclick="savePassDetails()" class="flex-1 py-2.5 bg-[#064e3b] hover:bg-[#047857] text-white rounded-xl text-xs font-bold">
+          Save Pass
+        </button>
+        <button onclick="togglePassEditModal()" class="py-2.5 px-4 bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODAL: EDIT OFFICE ROUTINE -->
+  <!-- ============================================================== -->
+  <div id="routineEditModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+      <h3 class="text-base font-bold text-slate-900 mb-1">Edit Daily Commute Routine</h3>
+      <p class="text-xs text-slate-500 mb-4">Set your regular morning office train and evening return service.</p>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Morning Office Train Time &amp; Route:</label>
+          <input type="text" id="modalMorningInput" value="08:32 AM · Thane to Dadar" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Morning Service Type / Car Rake:</label>
+          <input type="text" id="modalMorningDetailsInput" value="Fast Local · 12-Car Rake · Arrives 09:05 AM" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Evening Return Train Time &amp; Route:</label>
+          <input type="text" id="modalEveningInput" value="06:45 PM · Dadar to Thane" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Evening Service Type / Car Rake:</label>
+          <input type="text" id="modalEveningDetailsInput" value="Fast Local · 12-Car Rake · Arrives 07:18 PM" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold" />
+        </div>
+      </div>
+
+      <div class="mt-5 flex gap-2">
+        <button onclick="saveRoutineDetails()" class="flex-1 py-2.5 bg-[#064e3b] hover:bg-[#047857] text-white rounded-xl text-xs font-bold">
+          Save Routine
+        </button>
+        <button onclick="closeRoutineEditModal()" class="py-2.5 px-4 bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- FOOTER -->
+  <!-- ============================================================== -->
+  <footer class="bg-white border-t border-slate-200 py-6 px-4 sm:px-6 lg:px-8 text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-slate-800">CentralSaathi</span>
+        <span>·</span>
+        <span>Mumbai Suburban Railway Mobility Suite</span>
+      </div>
+      <div class="text-[11px] text-slate-400">
+        Timetable data grounded in Central Railway Suburban Working Time Table (WTT 2026).
+      </div>
+      <div class="flex items-center gap-4 text-[11px] font-semibold text-slate-600">
+        <button onclick="switchAppTab('planner')" class="hover:text-emerald-800">Planner</button>
+        <span>·</span>
+        <button onclick="switchAppTab('satellite')" class="hover:text-emerald-800">Satellite</button>
+        <span>·</span>
+        <button onclick="switchAppTab('commuter-suite')" class="hover:text-emerald-800">Commuter Desk</button>
+        <span>·</span>
+        <button onclick="switchAppTab('my-personal')" class="hover:text-amber-800">My Pass</button>
+        <span>·</span>
+        <button onclick="switchAppTab('sos')" class="hover:text-rose-700 text-rose-600">SOS 139</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Script Entry -->
+  <script src="/app.js"></script>
+</body>
+</html>

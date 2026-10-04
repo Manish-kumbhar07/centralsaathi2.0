@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="100%" height="100%">
+  <defs>
+    <linearGradient id="midnightSky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#020617"/>
+      <stop offset="45%" stop-color="#091833"/>
+      <stop offset="75%" stop-color="#0e2a47"/>
+      <stop offset="100%" stop-color="#031120"/>
+    </linearGradient>
+    <linearGradient id="cyberNeonGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#3b82f6" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0.8"/>
+    </linearGradient>
+    <linearGradient id="electricRail" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0369a1"/>
+    </linearGradient>
+    <filter id="neonBlur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="1920" height="1080" fill="url(#midnightSky)"/>
+
+  <!-- High-Tech Mumbai Cyber City Skyline Backdrop -->
+  <g fill="#051326" opacity="0.85">
+    <rect x="700" y="380" width="60" height="340"/>
+    <rect x="780" y="320" width="75" height="400"/>
+    <rect x="870" y="270" width="55" height="450"/>
+    <rect x="940" y="350" width="85" height="370"/>
+    <rect x="1040" y="240" width="70" height="480"/>
+    <rect x="1130" y="310" width="90" height="410"/>
+    <rect x="1240" y="280" width="65" height="440"/>
+    <rect x="1320" y="340" width="80" height="380"/>
+    <rect x="1420" y="260" width="70" height="460"/>
+    <rect x="1510" y="330" width="95" height="390"/>
+    <rect x="1630" y="370" width="80" height="350"/>
+  </g>
+
+  <!-- Windows Glowing Cyan & Amber -->
+  <g fill="#38bdf8" opacity="0.6">
+    <rect x="795" y="340" width="6" height="8"/>
+    <rect x="810" y="360" width="6" height="8"/>
+    <rect x="885" y="290" width="6" height="8"/>
+    <rect x="1055" y="260" width="6" height="8"/>
+    <rect x="1070" y="300" width="6" height="8"/>
+    <rect x="1150" y="330" width="6" height="8"/>
+    <rect x="1255" y="300" width="6" height="8"/>
+    <rect x="1435" y="280" width="6" height="8"/>
+    <rect x="1530" y="350" width="6" height="8"/>
+  </g>
+
+  <!-- Overhead Electric OHE Catenary Masts -->
+  <g stroke="#1e293b" stroke-width="5" opacity="0.9">
+    <line x1="850" y1="360" x2="850" y2="780"/>
+    <line x1="1200" y1="320" x2="1200" y2="780"/>
+    <line x1="1580" y1="280" x2="1580" y2="780"/>
+    <!-- Cross gantries -->
+    <line x1="800" y1="420" x2="1620" y2="340" stroke="#334155" stroke-width="4"/>
+  </g>
+
+  <!-- Glowing Overhead Contact Wires -->
+  <path d="M 600,430 Q 1100,470 1920,400" stroke="#38bdf8" stroke-width="2" opacity="0.7" fill="none" filter="url(#neonBlur)"/>
+  <path d="M 600,450 Q 1100,490 1920,420" stroke="#06b6d4" stroke-width="2" opacity="0.5" fill="none"/>
+
+  <!-- Ballast & Ground -->
+  <path d="M 600,750 L 1920,680 L 1920,1080 L 600,1080 Z" fill="#07131e"/>
+
+  <!-- Glowing Electric Railway Tracks (Perspective) -->
+  <g filter="url(#neonBlur)">
+    <!-- Right Track Pair -->
+    <line x1="1100" y1="720" x2="1850" y2="1080" stroke="url(#electricRail)" stroke-width="6"/>
+    <line x1="1170" y1="720" x2="2020" y2="1080" stroke="url(#electricRail)" stroke-width="6"/>
+    <!-- Center Track Pair -->
+    <line x1="980" y1="730" x2="1520" y2="1080" stroke="url(#electricRail)" stroke-width="5"/>
+    <line x1="1040" y1="730" x2="1670" y2="1080" stroke="url(#electricRail)" stroke-width="5"/>
+    <!-- Left Track Pair -->
+    <line x1="880" y1="740" x2="1200" y2="1080" stroke="url(#electricRail)" stroke-width="4"/>
+    <line x1="930" y1="740" x2="1330" y2="1080" stroke="url(#electricRail)" stroke-width="4"/>
+  </g>
+
+  <!-- Concrete Sleepers -->
+  <g stroke="#1e293b" stroke-width="4" opacity="0.6">
+    <line x1="1090" y1="740" x2="1190" y2="740"/>
+    <line x1="1150" y1="780" x2="1280" y2="780"/>
+    <line x1="1230" y1="830" x2="1390" y2="830"/>
+    <line x1="1330" y1="890" x2="1530" y2="890"/>
+    <line x1="1450" y1="960" x2="1700" y2="960"/>
+    <line x1="1600" y1="1040" x2="1900" y2="1040"/>
+  </g>
+
+  <!-- High-Speed Suburban AC EMU Train on Track -->
+  <g id="midnightTrain">
+    <!-- Train Cab Body -->
+    <path d="M 1250,560 L 1650,490 L 1820,720 L 1380,820 Z" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+    <!-- Aerodynamic Front Windshield -->
+    <path d="M 1260,570 L 1390,550 L 1420,640 L 1290,660 Z" fill="#0284c7" opacity="0.8" stroke="#38bdf8" stroke-width="2"/>
+    <!-- Windshield Reflection -->
+    <line x1="1280" y1="580" x2="1370" y2="630" stroke="#ffffff" stroke-width="2" opacity="0.6"/>
+    <!-- AC EMU Front Tricolor Central Rail Liveries -->
+    <path d="M 1275,665 L 1435,640 L 1445,670 L 1285,695 Z" fill="#f59e0b"/>
+    <path d="M 1285,695 L 1445,670 L 1455,700 L 1295,725 Z" fill="#0284c7"/>
+    <!-- Headlights Beam Glow -->
+    <circle cx="1320" cy="740" r="14" fill="#ffffff" filter="url(#neonBlur)"/>
+    <circle cx="1400" cy="725" r="14" fill="#ffffff" filter="url(#neonBlur)"/>
+    <!-- Light Cone Spilling onto Tracks -->
+    <polygon points="1320,740 1400,725 1850,1050 1450,1080" fill="url(#cyberNeonGlow)" opacity="0.25" filter="url(#neonBlur)"/>
+    <!-- LED Destination Display -->
+    <rect x="1300" y="525" width="85" height="18" rx="4" fill="#020617" stroke="#38bdf8" stroke-width="1"/>
+    <text x="1342" y="538" fill="#38bdf8" font-family="monospace" font-size="10" font-weight="bold" text-anchor="middle">CSMT FAST</text>
+  </g>
+
+  <!-- Platform Edge Lighting & Signal Aspects -->
+  <g>
+    <!-- Green Signal Mast -->
+    <circle cx="1780" cy="480" r="8" fill="#10b981" filter="url(#neonBlur)"/>
+    <circle cx="1780" cy="480" r="4" fill="#ffffff"/>
+    <line x1="1780" y1="490" x2="1780" y2="700" stroke="#334155" stroke-width="4"/>
+  </g>
+</svg>

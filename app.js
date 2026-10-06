@@ -1828,21 +1828,23 @@ window.recenterRouteMap = function() {
 // ==========================================
 // LANDING PAGE HERO BACKGROUND CUSTOMIZATION
 // ==========================================
+// LANDING PAGE HERO BACKGROUND CUSTOMIZATION
+// ==========================================
 const HERO_BG_PRESETS = {
   dusk: {
-    url: '/public/assets/mumbai_railway_hero.svg',
+    url: '/assets/mumbai_railway_hero.svg',
     name: 'Dusk EMU'
   },
   midnight: {
-    url: '/public/assets/bg_midnight_rail.svg',
+    url: '/assets/bg_midnight_rail.svg',
     name: 'Midnight Electric'
   },
   monsoon: {
-    url: '/public/assets/bg_monsoon_ghat.svg',
+    url: '/assets/bg_monsoon_ghat.svg',
     name: 'Monsoon Ghat'
   },
   heritage: {
-    url: '/public/assets/bg_heritage_vt.svg',
+    url: '/assets/bg_heritage_vt.svg',
     name: 'VT Heritage'
   }
 };
@@ -1868,6 +1870,14 @@ window.selectPresetBg = function(presetKey) {
   } catch (e) {
     console.warn('LocalStorage error:', e);
   }
+
+  // Persist preset choice to server permanently
+  fetch('/api/save-hero-image', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ imagePath: preset.url, name: preset.name })
+  }).catch(err => console.warn('Failed to save preset to server:', err));
+
   toggleHeroBgModal(false);
 };
 
@@ -1877,15 +1887,55 @@ window.handleHeroBgFileSelected = function(event) {
 
   const reader = new FileReader();
   reader.onload = function(e) {
-    const dataUrl = e.target.result;
-    applyHeroBg(dataUrl, 'Custom Photo');
-    try {
-      localStorage.setItem('centralsaathi_hero_bg', dataUrl);
-      localStorage.setItem('centralsaathi_hero_bg_name', 'Custom Photo');
-    } catch (err) {
-      console.warn('Image size too large for localStorage cache:', err);
-    }
-    toggleHeroBgModal(false);
+    const rawDataUrl = e.target.result;
+    
+    // Scale and optimize image to ensure it easily fits in localStorage and persists permanently
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      let w = img.width;
+      let h = img.height;
+      const maxW = 1920;
+      const maxH = 1080;
+      if (w > maxW || h > maxH) {
+        if (w / h > maxW / maxH) {
+          h = Math.round((h * maxW) / w);
+          w = maxW;
+        } else {
+          w = Math.round((w * maxH) / h);
+          h = maxH;
+        }
+      }
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+      applyHeroBg(optimizedDataUrl, 'Custom Train Photo');
+      try {
+        localStorage.setItem('centralsaathi_hero_bg', optimizedDataUrl);
+        localStorage.setItem('centralsaathi_hero_bg_name', 'Custom Train Photo');
+      } catch (err) {
+        console.warn('LocalStorage cache limit:', err);
+      }
+
+      // Persist to server permanently so it survives across sessions and reloads
+      fetch('/api/save-hero-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageData: optimizedDataUrl, name: 'Custom Train Photo' })
+      }).then(r => r.json()).then(data => {
+        if (data.url && data.url !== optimizedDataUrl) {
+          try {
+            localStorage.setItem('centralsaathi_hero_bg', data.url);
+          } catch (e) {}
+        }
+      }).catch(err => console.warn('Failed to save wallpaper to server:', err));
+
+      toggleHeroBgModal(false);
+    };
+    img.src = rawDataUrl;
   };
   reader.readAsDataURL(file);
 };
@@ -1893,7 +1943,12 @@ window.handleHeroBgFileSelected = function(event) {
 window.resetHeroBgToDefault = function() {
   localStorage.removeItem('centralsaathi_hero_bg');
   localStorage.removeItem('centralsaathi_hero_bg_name');
-  applyHeroBg(HERO_BG_PRESETS.dusk.url, 'Change Background');
+  applyHeroBg(HERO_BG_PRESETS.dusk.url, 'Dusk EMU');
+  fetch('/api/save-hero-image', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ imagePath: HERO_BG_PRESETS.dusk.url, name: 'Dusk EMU' })
+  }).catch(err => {});
   toggleHeroBgModal(false);
 };
 
@@ -1912,13 +1967,33 @@ function applyHeroBg(bgUrl, labelText = '') {
   }
 }
 
-function initHeroWallpaper() {
+async function initHeroWallpaper() {
   const savedBg = localStorage.getItem('centralsaathi_hero_bg');
   const savedName = localStorage.getItem('centralsaathi_hero_bg_name');
   if (savedBg) {
-    applyHeroBg(savedBg, savedName || 'Custom');
-  } else {
-    applyHeroBg(HERO_BG_PRESETS.dusk.url, 'Change Background');
+    applyHeroBg(savedBg, savedName || 'Custom Train Photo');
+  }
+
+  // Check if a saved custom photo or preset exists on the server
+  try {
+    const res = await fetch('/api/current-hero-image');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.exists && data.url) {
+        applyHeroBg(data.url, data.name || 'Saved Train Photo');
+        try {
+          localStorage.setItem('centralsaathi_hero_bg', data.url);
+          localStorage.setItem('centralsaathi_hero_bg_name', data.name || 'Saved Train Photo');
+        } catch (e) {}
+        return;
+      }
+    }
+  } catch (e) {
+    // fallback
+  }
+
+  if (!savedBg) {
+    applyHeroBg(HERO_BG_PRESETS.dusk.url, 'Dusk EMU');
   }
 }
 
@@ -2453,8 +2528,8 @@ function renderUpcomingTrains(trains, fromCode, toCode) {
   const plannerTime = document.getElementById('plannerTimeInput')?.value || '';
   if (countEl) {
     countEl.textContent = plannerTime 
-      ? `${trains.length} trains from ${plannerTime} onwards · Click any train to track live` 
-      : `${trains.length} verified services · Click any train to track live`;
+      ? `${trains.length} trains from ${plannerTime} onwards · Click any train to select` 
+      : `${trains.length} verified services · Click any train to select`;
   }
 
   if (trains.length === 0) {
@@ -2513,9 +2588,9 @@ function renderUpcomingTrains(trains, fromCode, toCode) {
         </div>
 
         <div class="flex items-center gap-1.5 shrink-0">
-          <span class="text-[11px] font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-lg flex items-center gap-1">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>Track Live</span>
+          <span class="text-[11px] font-bold text-slate-700 bg-slate-100 group-hover:bg-emerald-50 group-hover:text-emerald-900 group-hover:border-emerald-200 border border-slate-200 px-2.5 py-1 rounded-xl transition-all flex items-center gap-1">
+            <span>Select</span>
+            <span>➔</span>
           </span>
         </div>
       </div>
@@ -2533,9 +2608,6 @@ window.pickTrainFromList = function(idx, fromCode, toCode) {
     renderRouteTimeline(stops, fromCode, toCode);
     updateMapActiveRoute(fromCode, toCode, stops, train);
     populateRouteStationsInSpeedometer(stops, toCode);
-
-    // Switch to map tab and show live tracking
-    switchAppTab('satellite');
   }
 };
 
@@ -2812,6 +2884,81 @@ window.startRideSimulation = function() {
   }, 2200);
 };
 
+// Helper for client-side route synthesis
+function getSynthesizedStopsBetweenClient(origin, destination, isFast = false) {
+  const MAIN = ['CSMT', 'MSD', 'SNRD', 'BY', 'CHG', 'CRD', 'PR', 'DR', 'MTN', 'SIN', 'CLA', 'VVH', 'GC', 'VK', 'KJRD', 'BND', 'NHU', 'MLND', 'TNA', 'KLVA', 'MBQ', 'DIVA', 'KOPR', 'DI', 'THK', 'KYN'];
+  const KSRA = ['KYN', 'SHAD', 'ABY', 'TLA', 'KDV', 'VSD', 'ASO', 'ATG', 'THS', 'KE', 'OMB', 'KSRA'];
+  const KJT = ['KYN', 'VLDI', 'ULNR', 'ABH', 'BUD', 'VGI', 'SHLU', 'NRL', 'BVS', 'KJT', 'PDI', 'KLY', 'DLV', 'LWJ', 'KHPI'];
+
+  const getCorridor = (code) => {
+    if (MAIN.includes(code)) return 'MAIN';
+    if (KSRA.includes(code)) return 'KSRA';
+    if (KJT.includes(code)) return 'KJT';
+    return 'MAIN';
+  };
+
+  const c1 = getCorridor(origin);
+  const c2 = getCorridor(destination);
+  let codes = [];
+
+  if (c1 === c2) {
+    const list = c1 === 'MAIN' ? MAIN : (c1 === 'KSRA' ? KSRA : KJT);
+    const i1 = list.indexOf(origin);
+    const i2 = list.indexOf(destination);
+    if (i1 === -1 || i2 === -1) codes = [origin, destination];
+    else if (i1 <= i2) codes = list.slice(i1, i2 + 1);
+    else codes = list.slice(i2, i1 + 1).reverse();
+  } else {
+    let p1 = [];
+    if (c1 === 'MAIN') {
+      const i1 = MAIN.indexOf(origin);
+      const iK = MAIN.indexOf('KYN');
+      p1 = i1 <= iK ? MAIN.slice(i1, iK) : MAIN.slice(iK, i1 + 1).reverse().slice(0, -1);
+    } else {
+      const b = c1 === 'KSRA' ? KSRA : KJT;
+      const i1 = b.indexOf(origin);
+      const iK = b.indexOf('KYN');
+      p1 = i1 <= iK ? b.slice(i1, iK) : b.slice(iK, i1 + 1).reverse().slice(0, -1);
+    }
+    let p2 = [];
+    if (c2 === 'MAIN') {
+      const iK = MAIN.indexOf('KYN');
+      const i2 = MAIN.indexOf(destination);
+      p2 = iK <= i2 ? MAIN.slice(iK, i2 + 1) : MAIN.slice(i2, iK + 1).reverse();
+    } else {
+      const b = c2 === 'KSRA' ? KSRA : KJT;
+      const iK = b.indexOf('KYN');
+      const i2 = b.indexOf(destination);
+      p2 = iK <= i2 ? b.slice(iK, i2 + 1) : b.slice(i2, iK + 1).reverse();
+    }
+    codes = [...p1, ...p2];
+  }
+
+  if (isFast && codes.length > 8) {
+    const fastHalts = ['CSMT', 'BY', 'DR', 'CLA', 'GC', 'BND', 'MLND', 'TNA', 'DIVA', 'DI', 'KYN'];
+    codes = codes.filter((c, idx) => {
+      if (idx === 0 || idx === codes.length - 1) return true;
+      if (MAIN.includes(c)) return fastHalts.includes(c);
+      return true;
+    });
+  }
+
+  return codes.map(c => {
+    const s = allStations.find(st => st.code === c);
+    return {
+      station_code: c,
+      station_name: s ? s.name : c,
+      code: c,
+      name: s ? s.name : c,
+      platforms: s?.platforms || 2,
+      door_side: s?.door_side || 'Left',
+      lat: s?.lat,
+      lng: s?.lng,
+      dist_km: s?.dist_km || 0
+    };
+  });
+}
+
 function populateRouteStationsInSpeedometer(stops, defaultTargetCode) {
   const select = document.getElementById('alarmStationSelect');
   if (!select) return;
@@ -2820,34 +2967,74 @@ function populateRouteStationsInSpeedometer(stops, defaultTargetCode) {
   let listToUse = stops;
 
   if (!listToUse || listToUse.length === 0) {
-    listToUse = allStations;
+    listToUse = selectedTrain?.intermediate_stops || selectedTrain?.stops;
+  }
+  if (!listToUse || listToUse.length === 0) {
+    const oCode = currentOriginCode || selectedTrain?.source_station_code || 'TNA';
+    const dCode = currentDestCode || selectedTrain?.destination_station_code || 'CSMT';
+    listToUse = getSynthesizedStopsBetweenClient(oCode, dCode, Boolean(selectedTrain?.is_fast));
   }
 
-  listToUse.forEach(s => {
+  const oCode = currentOriginCode || selectedTrain?.source_station_code || 'TNA';
+  const dCode = defaultTargetCode || currentDestCode || selectedTrain?.destination_station_code || 'CSMT';
+  const origStn = allStations.find(s => s.code === oCode);
+  const destStn = allStations.find(s => s.code === dCode);
+
+  // Update active train banner in Speed & Alarm tab
+  const trainNameEl = document.getElementById('alarmActiveTrainName');
+  if (trainNameEl) {
+    trainNameEl.textContent = `${selectedTrain?.train_name || 'Central Suburban Local'} (#${selectedTrain?.train_number || '97380'})`;
+  }
+  const trainRouteEl = document.getElementById('alarmActiveTrainRoute');
+  if (trainRouteEl) {
+    trainRouteEl.textContent = `${origStn?.name || oCode} ➔ ${destStn?.name || dCode} · Only stations on this service`;
+  }
+
+  let selectedCode = dCode;
+  listToUse.forEach((s, idx) => {
     const code = s.station_code || s.code;
     const name = s.station_name || s.name;
-    const opt = new Option(`${name} (${code})`, code, false, code === defaultTargetCode);
+    const stn = allStations.find(st => st.code === code) || s;
+    const isSelected = code === dCode || (idx === listToUse.length - 1 && !listToUse.some(x => (x.station_code || x.code) === dCode));
+    if (isSelected) selectedCode = code;
+    const opt = new Option(`${name} (${code}) · PF ${stn.platforms || 2} · Door: ${stn.door_side || 'Left'}`, code, false, isSelected);
     select.add(opt);
   });
 
-  const targetStn = allStations.find(s => s.code === defaultTargetCode);
-  if (targetStn) {
-    document.getElementById('telemetryTargetStn').textContent = `${targetStn.name} (${targetStn.dist_km} km)`;
-  }
+  handleAlarmStationChanged(selectedCode);
 }
 
-function armWakeAlarm(stnCode, thresholdKm) {
-  const stn = allStations.find(s => s.code === stnCode);
+window.handleAlarmStationChanged = function(code) {
+  const stn = allStations.find(s => s.code === code);
   if (!stn) return;
 
   wakeAlarmTargetStation = stn;
-  wakeAlarmDistanceThreshold = thresholdKm;
+  const targetTelemetry = document.getElementById('telemetryTargetStn');
+  if (targetTelemetry) {
+    targetTelemetry.textContent = `${stn.name} (${stn.dist_km ? stn.dist_km + ' km' : '0 km'})`;
+  }
+
+  if (isWakeAlarmArmed) {
+    const thresholdKm = wakeAlarmDistanceThreshold || 1.5;
+    const activeTarget = document.getElementById('activeAlarmTarget');
+    if (activeTarget) {
+      activeTarget.textContent = `${stn.name} (${thresholdKm} km)`;
+    }
+  }
+};
+
+function armWakeAlarm(stnCode, thresholdKm) {
+  const code = stnCode || document.getElementById('alarmStationSelect')?.value || currentDestCode;
+  const stn = allStations.find(s => s.code === code);
+  if (!stn) return;
+
+  wakeAlarmTargetStation = stn;
+  wakeAlarmDistanceThreshold = thresholdKm || 1.5;
   isWakeAlarmArmed = true;
 
   document.getElementById('alarmActiveStatus')?.classList.remove('hidden');
-  document.getElementById('activeAlarmTarget').textContent = `${stn.name} (${thresholdKm} km)`;
-
-  alert(`Wake alarm armed for ${stn.name}! An alert chime will ring ${thresholdKm} km before arrival.`);
+  const targetEl = document.getElementById('activeAlarmTarget');
+  if (targetEl) targetEl.textContent = `${stn.name} (${wakeAlarmDistanceThreshold} km before arrival)`;
 }
 
 window.disarmWakeAlarm = function() {
@@ -2861,23 +3048,115 @@ function checkWakeAlarmProximity(lat, lng) {
 
   const distKm = calculateHaversineDistance(lat, lng, wakeAlarmTargetStation.lat, wakeAlarmTargetStation.lng);
   if (distKm <= wakeAlarmDistanceThreshold) {
-    triggerAlarmBuzzer();
+    triggerStationArrivalAlarm(wakeAlarmTargetStation, distKm, false);
     disarmWakeAlarm();
   }
 }
 
-function triggerAlarmBuzzer() {
-  playAudibleChime();
+// Global Alarm State & 8-Second Auto-Stop Engine
+let alarmAudioInterval = null;
+let alarmTimeoutTimer = null;
+let alarmCountdownTimer = null;
+let alarmRemainingSeconds = 8;
+let isAlarmRinging = false;
 
-  if (navigator.vibrate) {
-    navigator.vibrate([600, 200, 600, 200, 1200]);
+window.triggerStationArrivalAlarm = function(stationObj, distKm = 1.2, isTest = false) {
+  const modal = document.getElementById('stationArrivalAlarmModal');
+  if (!modal) return;
+
+  const targetStn = stationObj || wakeAlarmTargetStation || allStations.find(s => s.code === 'DR') || allStations[0];
+  if (!targetStn) return;
+
+  const nameEl = document.getElementById('alarmModalStationName');
+  if (nameEl) nameEl.textContent = targetStn.name;
+  const codeEl = document.getElementById('alarmModalStationCode');
+  if (codeEl) codeEl.textContent = targetStn.code;
+  const marathiEl = document.getElementById('alarmModalStationMarathi');
+  if (marathiEl) marathiEl.textContent = targetStn.marathi_name || 'मध्य रेल्वे स्थानक';
+  const distEl = document.getElementById('alarmModalDistance');
+  if (distEl) distEl.textContent = isTest ? '1.2 km (Test Mode)' : `~${Number(distKm).toFixed(1)} km ahead`;
+  const doorEl = document.getElementById('alarmModalDoorSide');
+  if (doorEl) doorEl.textContent = targetStn.door_side ? `Door: ${targetStn.door_side}` : 'Door: Left & Right';
+
+  const subtextEl = document.getElementById('alarmModalSubtext');
+  if (subtextEl) {
+    subtextEl.textContent = isTest
+      ? 'Test Mode: Alarm rings continuously until you stop it, or automatically stops in 8 seconds.'
+      : `Your train is approaching ${targetStn.name}! Prepare to deboard from ${targetStn.door_side || 'Left'} side.`;
   }
 
-  alert(`WAKE UP! Arriving at ${wakeAlarmTargetStation?.name || 'Destination'} in less than ${wakeAlarmDistanceThreshold} km! Prepare to deboard.`);
-}
+  // 8-second visual countdown
+  alarmRemainingSeconds = 8;
+  const countEl = document.getElementById('alarmCountdownSeconds');
+  if (countEl) countEl.textContent = '8s';
+  const progBar = document.getElementById('alarmProgressBar');
+  if (progBar) progBar.style.width = '100%';
 
-window.testAlarmChimeSound = function() {
+  modal.classList.remove('hidden');
+  isAlarmRinging = true;
+
   playAudibleChime();
+  if (alarmAudioInterval) clearInterval(alarmAudioInterval);
+  alarmAudioInterval = setInterval(() => {
+    if (isAlarmRinging) {
+      playAudibleChime();
+      if (navigator.vibrate) navigator.vibrate([400, 200, 400]);
+    }
+  }, 950);
+
+  if (navigator.vibrate) navigator.vibrate([600, 200, 600, 200, 1000]);
+
+  if (alarmCountdownTimer) clearInterval(alarmCountdownTimer);
+  alarmCountdownTimer = setInterval(() => {
+    alarmRemainingSeconds--;
+    if (countEl) countEl.textContent = `${alarmRemainingSeconds}s`;
+    if (progBar) {
+      const pct = Math.max(0, (alarmRemainingSeconds / 8) * 100);
+      progBar.style.width = `${pct}%`;
+    }
+    if (alarmRemainingSeconds <= 0) {
+      clearInterval(alarmCountdownTimer);
+      alarmCountdownTimer = null;
+    }
+  }, 1000);
+
+  // Auto-stop after 8 seconds unless stopped by user
+  if (alarmTimeoutTimer) clearTimeout(alarmTimeoutTimer);
+  alarmTimeoutTimer = setTimeout(() => {
+    stopStationArrivalAlarm(true);
+  }, 8000);
+};
+
+window.stopStationArrivalAlarm = function(wasAutoStopped = false) {
+  isAlarmRinging = false;
+  if (alarmAudioInterval) {
+    clearInterval(alarmAudioInterval);
+    alarmAudioInterval = null;
+  }
+  if (alarmTimeoutTimer) {
+    clearTimeout(alarmTimeoutTimer);
+    alarmTimeoutTimer = null;
+  }
+  if (alarmCountdownTimer) {
+    clearInterval(alarmCountdownTimer);
+    alarmCountdownTimer = null;
+  }
+
+  document.getElementById('stationArrivalAlarmModal')?.classList.add('hidden');
+  disarmWakeAlarm();
+
+  const statusText = document.getElementById('gpsStatusText');
+  if (statusText) {
+    statusText.textContent = wasAutoStopped
+      ? 'Station wake alarm automatically silenced after 8 seconds.'
+      : 'Station wake alarm stopped by commuter.';
+  }
+};
+
+window.testAlarmPopupModal = function() {
+  const code = document.getElementById('alarmStationSelect')?.value || currentDestCode || 'DR';
+  const stn = allStations.find(s => s.code === code) || allStations[0];
+  triggerStationArrivalAlarm(stn, 1.2, true);
 };
 
 function playAudibleChime() {

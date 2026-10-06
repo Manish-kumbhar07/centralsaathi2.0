@@ -10,22 +10,116 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '15mb' }));
+app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use('/assets', express.static(path.join(__dirname, 'public', 'assets')));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
 
-// Load official timetable dataset
-const DATA_FILE = path.join(__dirname, 'server', 'data', 'official_timetable_data.json');
-let rawData = { stations: [], trains: [], train_stops: [], railway_alerts: [] };
+// Persistent Train Wallpaper Storage State (in-memory + disk cache)
+const HERO_CONFIG_FILE = path.join(__dirname, 'server', 'data', 'hero_image_config.json');
+let savedHeroWallpaper = {
+  url: '/assets/mumbai_railway_hero.svg',
+  name: 'Dusk EMU'
+};
 
+// Try loading previously saved hero configuration from disk if exists
 try {
-  if (fs.existsSync(DATA_FILE)) {
-    rawData = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
-    console.log(`[CentralSaathi] Loaded official dataset: ${rawData.stations?.length || 0} stations, ${rawData.trains?.length || 0} trains`);
+  if (fs.existsSync(HERO_CONFIG_FILE)) {
+    const saved = JSON.parse(fs.readFileSync(HERO_CONFIG_FILE, 'utf-8'));
+    if (saved && saved.url) {
+      savedHeroWallpaper = saved;
+    }
   }
 } catch (e) {
-  console.error('[CentralSaathi] Error reading timetable dataset:', e);
+  // Safe to ignore on read-only environments
+}
+
+// Persistent Train Wallpaper Storage Endpoint
+app.post('/api/save-hero-image', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  try {
+    const { imageData, imagePath, name } = req.body;
+    
+    if (imagePath) {
+      savedHeroWallpaper = {
+        url: imagePath,
+        name: name || 'Central Railway Theme'
+      };
+    } else if (imageData) {
+      savedHeroWallpaper = {
+        url: imageData,
+        name: name || 'Custom Train Photo'
+      };
+
+      // Try saving to disk if filesystem is writable (VPS/local dev), safe to skip on read-only Vercel
+      try {
+        const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
+        const buffer = Buffer.from(base64Data, 'base64');
+        const assetsDir = path.join(__dirname, 'public', 'assets');
+        if (!fs.existsSync(assetsDir)) {
+          fs.mkdirSync(assetsDir, { recursive: true });
+        }
+        const savePath = path.join(assetsDir, 'saved_hero_image.png');
+        fs.writeFileSync(savePath, buffer);
+        savedHeroWallpaper.url = '/assets/saved_hero_image.png';
+      } catch (fsErr) {
+        // Read-only filesystem on Vercel: safely ignored since imageData is kept in savedHeroWallpaper & client localStorage
+        console.warn('[Storage] Read-only filesystem, saved in-memory:', fsErr.message);
+      }
+    }
+
+    // Try saving configuration file if writable
+    try {
+      const dataDir = path.dirname(HERO_CONFIG_FILE);
+      if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+      fs.writeFileSync(HERO_CONFIG_FILE, JSON.stringify(savedHeroWallpaper, null, 2));
+    } catch (cfgErr) {
+      // Safe to ignore on read-only environments
+    }
+
+    return res.json({
+      success: true,
+      url: savedHeroWallpaper.url,
+      name: savedHeroWallpaper.name
+    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/current-hero-image', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  const diskPath = path.join(__dirname, 'public', 'assets', 'saved_hero_image.png');
+  if (fs.existsSync(diskPath)) {
+    return res.json({ exists: true, url: '/assets/saved_hero_image.png', name: savedHeroWallpaper.name || 'Saved Train Photo' });
+  }
+  if (savedHeroWallpaper && savedHeroWallpaper.url) {
+    return res.json({ exists: true, url: savedHeroWallpaper.url, name: savedHeroWallpaper.name });
+  }
+  return res.json({ exists: false, url: '/assets/mumbai_railway_hero.svg', name: 'Dusk EMU' });
+});
+
+// Load official timetable dataset with multi-path fallback for Vercel/Docker
+const possibleDataFiles = [
+  path.join(__dirname, 'server', 'data', 'official_timetable_data.json'),
+  path.join(process.cwd(), 'server', 'data', 'official_timetable_data.json'),
+  path.join(__dirname, 'data', 'official_timetable_data.json'),
+  path.join(process.cwd(), 'data', 'official_timetable_data.json')
+];
+let rawData = { stations: [], trains: [], train_stops: [], railway_alerts: [] };
+
+for (const p of possibleDataFiles) {
+  if (fs.existsSync(p)) {
+    try {
+      rawData = JSON.parse(fs.readFileSync(p, 'utf-8'));
+      console.log(`[CentralSaathi] Loaded official dataset from ${p}: ${rawData.stations?.length || 0} stations, ${rawData.trains?.length || 0} trains`);
+      break;
+    } catch (e) {
+      console.error('[CentralSaathi] Error reading timetable dataset:', e.message);
+    }
+  }
 }
 
 // Marathi name dictionary for all 55 suburban stations
@@ -451,6 +545,98 @@ app.get('/api/stations', (req, res) => {
   return res.json(formattedStations);
 });
 
+// SVG Platform Schematic Generator for pure Node / Vercel fallback
+function generateFallbackStationSvg(code, name, platforms, doorSide) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 320" width="100%" height="220" class="rounded-xl border border-slate-700 bg-slate-900 shadow-inner">
+    <rect width="800" height="320" fill="#08121e"/>
+    <text x="30" y="35" fill="#f8fafc" font-size="16" font-weight="bold" font-family="sans-serif">${name} (${code}) Platform Schematic</text>
+    <text x="30" y="55" fill="#34d399" font-size="11" font-family="sans-serif">Central Railway Mumbai Suburban · ${platforms} Platforms · Door: ${doorSide}</text>
+    <line x1="30" y1="100" x2="770" y2="100" stroke="#334155" stroke-width="4" stroke-dasharray="8 4"/>
+    <line x1="30" y1="130" x2="770" y2="130" stroke="#059669" stroke-width="5"/>
+    <line x1="30" y1="190" x2="770" y2="190" stroke="#059669" stroke-width="5"/>
+    <line x1="30" y1="220" x2="770" y2="220" stroke="#334155" stroke-width="4" stroke-dasharray="8 4"/>
+    <rect x="120" y="140" width="560" height="40" rx="6" fill="#1e293b" stroke="#059669" stroke-width="2"/>
+    <text x="400" y="165" fill="#f8fafc" font-size="13" font-weight="bold" text-anchor="middle" font-family="sans-serif">PF 1 &amp; PF 2 (Main Suburban Platforms)</text>
+    <rect x="360" y="80" width="80" height="160" rx="4" fill="#3b82f6" fill-opacity="0.3" stroke="#60a5fa" stroke-width="2"/>
+    <text x="400" y="70" fill="#93c5fd" font-size="10" font-weight="bold" text-anchor="middle" font-family="sans-serif">Main Foot Overbridge (FOB)</text>
+    <rect x="140" y="148" width="50" height="22" rx="4" fill="#065f46"/><text x="165" y="163" fill="#a7f3d0" font-size="9" font-weight="bold" text-anchor="middle">ATVM</text>
+    <rect x="610" y="148" width="55" height="22" rx="4" fill="#1e40af"/><text x="637" y="163" fill="#bfdbfe" font-size="9" font-weight="bold" text-anchor="middle">Water ATM</text>
+    <rect x="220" y="148" width="60" height="22" rx="4" fill="#78350f"/><text x="250" y="163" fill="#fde68a" font-size="9" font-weight="bold" text-anchor="middle">SM Office</text>
+  </svg>`;
+}
+
+// Helper to synthesize stops along Central Railway corridors
+function getSynthesizedStopsBetween(origin, destination, isFast = false) {
+  const MAIN = ['CSMT', 'MSD', 'SNRD', 'BY', 'CHG', 'CRD', 'PR', 'DR', 'MTN', 'SIN', 'CLA', 'VVH', 'GC', 'VK', 'KJRD', 'BND', 'NHU', 'MLND', 'TNA', 'KLVA', 'MBQ', 'DIVA', 'KOPR', 'DI', 'THK', 'KYN'];
+  const KSRA = ['KYN', 'SHAD', 'ABY', 'TLA', 'KDV', 'VSD', 'ASO', 'ATG', 'THS', 'KE', 'OMB', 'KSRA'];
+  const KJT = ['KYN', 'VLDI', 'ULNR', 'ABH', 'BUD', 'VGI', 'SHLU', 'NRL', 'BVS', 'KJT', 'PDI', 'KLY', 'DLV', 'LWJ', 'KHPI'];
+
+  const getCorridor = (code) => {
+    if (MAIN.includes(code)) return 'MAIN';
+    if (KSRA.includes(code)) return 'KSRA';
+    if (KJT.includes(code)) return 'KJT';
+    return 'MAIN';
+  };
+
+  const c1 = getCorridor(origin);
+  const c2 = getCorridor(destination);
+  let codes = [];
+
+  if (c1 === c2) {
+    const list = c1 === 'MAIN' ? MAIN : (c1 === 'KSRA' ? KSRA : KJT);
+    const i1 = list.indexOf(origin);
+    const i2 = list.indexOf(destination);
+    if (i1 === -1 || i2 === -1) codes = [origin, destination];
+    else if (i1 <= i2) codes = list.slice(i1, i2 + 1);
+    else codes = list.slice(i2, i1 + 1).reverse();
+  } else {
+    // Via Kalyan Junction
+    let p1 = [];
+    if (c1 === 'MAIN') {
+      const i1 = MAIN.indexOf(origin);
+      const iK = MAIN.indexOf('KYN');
+      p1 = i1 <= iK ? MAIN.slice(i1, iK) : MAIN.slice(iK, i1 + 1).reverse().slice(0, -1);
+    } else {
+      const b = c1 === 'KSRA' ? KSRA : KJT;
+      const i1 = b.indexOf(origin);
+      const iK = b.indexOf('KYN');
+      p1 = i1 <= iK ? b.slice(i1, iK) : b.slice(iK, i1 + 1).reverse().slice(0, -1);
+    }
+    let p2 = [];
+    if (c2 === 'MAIN') {
+      const iK = MAIN.indexOf('KYN');
+      const i2 = MAIN.indexOf(destination);
+      p2 = iK <= i2 ? MAIN.slice(iK, i2 + 1) : MAIN.slice(i2, iK + 1).reverse();
+    } else {
+      const b = c2 === 'KSRA' ? KSRA : KJT;
+      const iK = b.indexOf('KYN');
+      const i2 = b.indexOf(destination);
+      p2 = iK <= i2 ? b.slice(iK, i2 + 1) : b.slice(i2, iK + 1).reverse();
+    }
+    codes = [...p1, ...p2];
+  }
+
+  // Filter fast stops if isFast and within CSMT-KYN
+  if (isFast && codes.length > 8) {
+    const fastHalts = ['CSMT', 'BY', 'DR', 'CLA', 'GC', 'BND', 'MLND', 'TNA', 'DIVA', 'DI', 'KYN'];
+    codes = codes.filter((c, idx) => {
+      if (idx === 0 || idx === codes.length - 1) return true;
+      if (MAIN.includes(c)) return fastHalts.includes(c);
+      return true; // beyond Kalyan all trains stop
+    });
+  }
+
+  return codes.map(c => {
+    const s = formattedStations.find(st => st.code === c);
+    return {
+      station_code: c,
+      station_name: s ? s.name : c,
+      platform: s?.platforms ? `PF ${s.platforms}` : 'PF 2',
+      door_side: s?.door_side || 'Left'
+    };
+  });
+}
+
 // Authoritative Python Station Facilities & Track Layout Endpoint
 app.get('/api/stations/:code/facilities', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
@@ -483,6 +669,7 @@ app.get('/api/stations/:code/facilities', (req, res) => {
     platforms_count: stn?.platforms || 2,
     suburban_platforms: `PF 1 to ${stn?.platforms || 2}`,
     door_side: stn?.door_side || 'Left',
+    svg_map: generateFallbackStationSvg(code, stn?.name || code, stn?.platforms || 2, stn?.door_side || 'Left'),
     track_layout: {
       suburban_tracks: [
         { platform: 'PF 1', track_type: 'DOWN Line (Towards Kalyan/Kasara/Karjat)', door: 'Left' },
@@ -692,6 +879,39 @@ app.get('/api/trains/search', (req, res) => {
       if (py.status === 0 && py.stdout) {
         const parsed = JSON.parse(py.stdout.trim());
         if (parsed && (parsed.total_results > 0 || (parsed.all_scheduled_trains && parsed.all_scheduled_trains.length > 0))) {
+          const enrichTrain = (t) => {
+            if (!t.intermediate_stops || t.intermediate_stops.length === 0) {
+              const tid = Number(t.train || t.train_id || t.id);
+              const stops = stopsByTrainId.get(tid);
+              if (stops && stops.length > 0) {
+                let oStop = null, dStop = null;
+                for (const s of stops) {
+                  if (s.station_code === origin && !oStop) oStop = s;
+                  else if (s.station_code === destination && oStop) { dStop = s; break; }
+                }
+                if (oStop && dStop) {
+                  t.intermediate_stops = stops
+                    .filter((s) => s.sequence >= oStop.sequence && s.sequence <= dStop.sequence)
+                    .map((s) => {
+                      const stn = formattedStations.find((st) => st.code === s.station_code);
+                      return {
+                        station_code: s.station_code,
+                        station_name: stn ? stn.name : s.station_code,
+                        arrival_time: s.arrival_time,
+                        departure_time: s.departure_time,
+                        platform: s.platform || 'PF 1',
+                        door_side: stn ? stn.door_side : 'Left',
+                      };
+                    });
+                }
+              }
+              if (!t.intermediate_stops || t.intermediate_stops.length === 0) {
+                t.intermediate_stops = getSynthesizedStopsBetween(origin, destination, Boolean(t.is_fast));
+              }
+            }
+          };
+          (parsed.available_trains || []).forEach(enrichTrain);
+          (parsed.all_scheduled_trains || []).forEach(enrichTrain);
           return res.json(parsed);
         }
       }
@@ -1169,11 +1389,13 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Start listening
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[CentralSaathi Full-Stack] Server running on http://0.0.0.0:${PORT}`);
-  console.log(`[CentralSaathi Full-Stack] Native Express API Gateway active for all 55 stations`);
-  console.log(`[CentralSaathi Full-Stack] Zero TypeScript, Zero React`);
-});
+// Start listening (skip if running under Vercel serverless environment)
+if (!process.env.VERCEL) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`[CentralSaathi Full-Stack] Server running on http://0.0.0.0:${PORT}`);
+    console.log(`[CentralSaathi Full-Stack] Native Express API Gateway active for all 55 stations`);
+    console.log(`[CentralSaathi Full-Stack] Zero TypeScript, Zero React`);
+  });
+}
 
 export default app;

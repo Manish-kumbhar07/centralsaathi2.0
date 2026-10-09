@@ -418,6 +418,11 @@ def snap_user_gps_to_railway(conn, user_lat, user_lng, user_speed_kmh=0.0):
     """
     Snaps user GPS coordinates to closest Central Line station and detects nearest moving train.
     """
+    user_lat, user_lng, user_speed_kmh = float(user_lat), float(user_lng), float(user_speed_kmh)
+    if not (-90 <= user_lat <= 90 and -180 <= user_lng <= 180):
+        raise ValueError("GPS coordinates must be within valid latitude and longitude ranges")
+    if user_speed_kmh < 0:
+        raise ValueError("GPS speed cannot be negative")
     cur = conn.cursor()
     cur.execute("SELECT station_code, station_name, short_name, latitude, longitude, dist_from_csmt_km FROM stations WHERE latitude IS NOT NULL")
     stations = cur.fetchall()
@@ -431,6 +436,8 @@ def snap_user_gps_to_railway(conn, user_lat, user_lng, user_speed_kmh=0.0):
             min_dist_km = d
             closest_station = dict(s)
 
+    if closest_station is None:
+        return {"success": False, "error": "No stations with coordinates are available"}
     closest_station["distance_meters"] = int(min_dist_km * 1000)
     closest_station["distance_km"] = round(min_dist_km, 2)
     door_info = PLATFORM_DOOR_SIDES.get(closest_station["station_code"], {"side": "LEFT", "side_mr": "डाव्या बाजूने", "note": "Left side"})

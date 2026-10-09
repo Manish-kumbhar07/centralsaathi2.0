@@ -185,7 +185,8 @@ def init_database():
     add_col_if_missing("service_status", "train_number", "TEXT")
 
     # Indices for high performance routing
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_train_stops_code ON train_stops(station_code);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_train_stops_station_route ON train_stops(station_code, train_id, sequence, departure_time, platform);")
+    cursor.execute("DROP INDEX IF EXISTS idx_train_stops_code;")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_train_stops_train ON train_stops(train_id);")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_trains_dir ON trains(direction, line);")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_trains_days ON trains(service_days);")

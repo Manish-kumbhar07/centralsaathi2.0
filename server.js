@@ -9,6 +9,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
+const PYTHON_COMMAND = process.env.PYTHON_COMMAND || (process.platform === 'win32' ? 'python' : 'python3');
 app.disable('x-powered-by');
 
 app.use(express.json({ limit: '15mb' }));
@@ -674,7 +675,7 @@ app.get('/api/stations/:code/facilities', (req, res) => {
   
   if (fs.existsSync(scriptPath)) {
     try {
-      const py = spawnSync('python3', [scriptPath, '--code', code], {
+      const py = spawnSync(PYTHON_COMMAND, [scriptPath, '--code', code], {
         encoding: 'utf-8',
         timeout: 5000,
         env: { ...process.env, PYTHONPATH: path.join(__dirname, 'server') }
@@ -738,7 +739,7 @@ app.get('/api/trains/:trainNumber/telemetry', (req, res) => {
 
   if (fs.existsSync(scriptPath)) {
     try {
-      const py = spawnSync('python3', [scriptPath, '--train', trainNumber], {
+      const py = spawnSync(PYTHON_COMMAND, [scriptPath, '--train', trainNumber], {
         encoding: 'utf-8',
         timeout: 5000,
         env: { ...process.env, PYTHONPATH: path.join(__dirname, 'server') }
@@ -912,7 +913,7 @@ app.get('/api/trains/search', (req, res) => {
   const pythonScript = path.join(__dirname, 'server', 'route_engine.py');
   if (fs.existsSync(pythonScript)) {
     try {
-      const py = spawnSync('python3', [pythonScript, '--origin', origin, '--destination', destination, '--time', time, '--date', dateStr], {
+      const py = spawnSync(PYTHON_COMMAND, [pythonScript, '--origin', origin, '--destination', destination, '--time', time, '--date', dateStr], {
         encoding: 'utf-8',
         timeout: 8000,
         env: { ...process.env, PYTHONPATH: path.join(__dirname, 'server') }
@@ -993,7 +994,7 @@ app.get('/api/trains/active-fleet', (req, res) => {
   const scriptPath = path.join(__dirname, 'backend', 'timetable_engine.py');
   if (fs.existsSync(scriptPath)) {
     try {
-      const py = spawnSync('python3', [scriptPath, '--fleet'], { encoding: 'utf-8', timeout: 5000 });
+      const py = spawnSync(PYTHON_COMMAND, [scriptPath, '--fleet'], { encoding: 'utf-8', timeout: 5000 });
       if (py.status === 0 && py.stdout) {
         return res.json(JSON.parse(py.stdout.trim()));
       }
@@ -1037,7 +1038,7 @@ app.get('/api/timetable/first-last', (req, res) => {
   const scriptPath = path.join(__dirname, 'backend', 'timetable_engine.py');
   if (fs.existsSync(scriptPath)) {
     try {
-      const py = spawnSync('python3', [scriptPath, '--first-last', '--origin', origin, '--destination', destination], {
+      const py = spawnSync(PYTHON_COMMAND, [scriptPath, '--first-last', '--origin', origin, '--destination', destination], {
         encoding: 'utf-8',
         timeout: 5000,
       });
@@ -1111,7 +1112,7 @@ app.get('/api/railway-updates', (req, res) => {
   const pythonScript = path.join(__dirname, 'server', 'railway_news.py');
   if (fs.existsSync(pythonScript)) {
     try {
-      const py = spawnSync('python3', [pythonScript], {
+      const py = spawnSync(PYTHON_COMMAND, [pythonScript], {
         encoding: 'utf-8',
         timeout: 5000,
         env: { ...process.env, PYTHONPATH: path.join(__dirname, 'server') }
@@ -1135,7 +1136,7 @@ app.get('/api/railway-notices', (req, res) => {
   const pythonScript = path.join(__dirname, 'server', 'railway_news.py');
   if (fs.existsSync(pythonScript)) {
     try {
-      const py = spawnSync('python3', [pythonScript], {
+      const py = spawnSync(PYTHON_COMMAND, [pythonScript], {
         encoding: 'utf-8',
         timeout: 5000,
         env: { ...process.env, PYTHONPATH: path.join(__dirname, 'server') }

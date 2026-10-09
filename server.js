@@ -454,7 +454,8 @@ const formattedStations = (rawData.stations || []).map((s) => {
   return {
     code,
     name: s.station_name || '',
-    marathi_name: MARATHI_NAMES[code] || s.station_name || '',
+    // Prefer canonical timetable translations and retain the dictionary fallback.
+    marathi_name: s.marathi_name || MARATHI_NAMES[code] || s.station_name || '',
     lat: latVal,
     lng: lngVal,
     dist_km: Number(s.dist_from_csmt_km || 0),

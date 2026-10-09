@@ -237,40 +237,70 @@ def validate_dataset(data: Dict[str, Any]) -> Tuple[bool, List[str], Dict[str, A
 
     # 1. Validate Timetable Versions
     versions = data.get("timetable_versions", [])
+    if not isinstance(versions, list):
+        all_errors.append("timetable_versions must be an array.")
+        versions = []
     if not versions:
         all_errors.append("No timetable_versions found in dataset. Timetable must be versioned.")
     else:
         for v in versions:
-            all_errors.extend(validate_timetable_version(v))
+            if not isinstance(v, dict):
+                all_errors.append("Each timetable version must be an object.")
+            else:
+                all_errors.extend(validate_timetable_version(v))
 
     # 2. Validate Stations
     stations = data.get("stations", [])
+    if not isinstance(stations, list):
+        all_errors.append("stations must be an array.")
+        stations = []
     if not stations:
         all_errors.append("No stations found in dataset. Stations table cannot be empty.")
     valid_station_codes: Set[str] = set()
     for s in stations:
-        all_errors.extend(validate_station(s, valid_station_codes))
+        if not isinstance(s, dict):
+            all_errors.append("Each station record must be an object.")
+        else:
+            all_errors.extend(validate_station(s, valid_station_codes))
 
     # 3. Validate Trains & Stops
     trains = data.get("trains", [])
     raw_stops = data.get("train_stops", [])
+    if not isinstance(trains, list):
+        all_errors.append("trains must be an array.")
+        trains = []
+    if not isinstance(raw_stops, list):
+        all_errors.append("train_stops must be an array.")
+        raw_stops = []
 
     if not trains:
         all_errors.append("No trains found in dataset.")
 
     stops_by_train: Dict[Any, List[Dict[str, Any]]] = {}
     for st in raw_stops:
+        if not isinstance(st, dict):
+            all_errors.append("Each train stop record must be an object.")
+            continue
         tid = st.get("train_id")
         stops_by_train.setdefault(tid, []).append(st)
 
     seen_train_numbers: Set[str] = set()
     for t in trains:
+        if not isinstance(t, dict):
+            all_errors.append("Each train record must be an object.")
+            continue
         tid = t.get("id")
         tnum = t.get("train_number")
         train_errs = validate_train(t, valid_station_codes, seen_train_numbers)
         all_errors.extend(train_errs)
 
         t_stops = t.get("stops") or stops_by_train.get(tid) or stops_by_train.get(tnum) or []
+        if not isinstance(t_stops, list):
+            all_errors.append(f"Train {tnum or 'UNKNOWN'} stops must be an array.")
+            t_stops = []
+        elif any(not isinstance(stop, dict) for stop in t_stops):
+            all_errors.append(f"Train {tnum or 'UNKNOWN'} contains a stop record that is not an object.")
+            t_stops = [stop for stop in t_stops if isinstance(stop, dict)]
         stops_errs = validate_train_stops(t, t_stops, valid_station_codes)
         all_errors.extend(stops_errs)
 

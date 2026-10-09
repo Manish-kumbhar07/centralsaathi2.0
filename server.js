@@ -9,6 +9,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
+app.disable('x-powered-by');
 
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
@@ -40,7 +41,14 @@ try {
 app.post('/api/save-hero-image', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   try {
-    const { imageData, imagePath, name } = req.body;
+    const { imageData, imagePath, name } = req.body || {};
+
+    if (imageData !== undefined && (typeof imageData !== 'string' || !/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/i.test(imageData))) {
+      return res.status(400).json({ success: false, error: 'imageData must be a base64 PNG, JPEG, or WebP data URL.' });
+    }
+    if (imagePath !== undefined && (typeof imagePath !== 'string' || !imagePath.trim())) {
+      return res.status(400).json({ success: false, error: 'imagePath must be a non-empty string.' });
+    }
     
     if (imagePath) {
       savedHeroWallpaper = {
@@ -55,7 +63,7 @@ app.post('/api/save-hero-image', (req, res) => {
 
       // Try saving to disk if filesystem is writable (VPS/local dev), safe to skip on read-only Vercel
       try {
-        const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
+        const base64Data = imageData.replace(/^data:image\/(?:png|jpeg|webp);base64,/i, '');
         const buffer = Buffer.from(base64Data, 'base64');
         const assetsDir = path.join(__dirname, 'public', 'assets');
         if (!fs.existsSync(assetsDir)) {
@@ -760,10 +768,12 @@ const trainsById = new Map();
 });
 
 function parseMinutes(tStr) {
-  const parts = String(tStr || '08:00').split(':').map(Number);
-  const h = parts[0] || 0;
-  const m = parts[1] || 0;
-  return h * 60 + m;
+  const match = typeof tStr === 'string' && /^(?:[01]\d|2[0-3]):[0-5]\d$/.exec(tStr.trim());
+  if (!match) {
+    throw new RangeError('Time must use valid 24-hour HH:MM format.');
+  }
+  const [hours, minutes] = tStr.trim().split(':').map(Number);
+  return hours * 60 + minutes;
 }
 
 function searchTimetableDirect(originCode, destCode, timeStr) {
@@ -866,6 +876,16 @@ app.get('/api/trains/search', (req, res) => {
   const currentLocalTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   const time = String(req.query.time || currentLocalTime).trim();
   const dateStr = String(req.query.date || now.toISOString().split('T')[0]).trim();
+
+  try {
+    parseMinutes(time);
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err.message });
+  }
+  const parsedDate = new Date(`${dateStr}T00:00:00Z`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr) || Number.isNaN(parsedDate.getTime()) || parsedDate.toISOString().slice(0, 10) !== dateStr) {
+    return res.status(400).json({ success: false, error: 'Date must be a valid calendar date in YYYY-MM-DD format.' });
+  }
 
   // Authoritative Python Route Engine over validated SQLite database
   const pythonScript = path.join(__dirname, 'server', 'route_engine.py');
@@ -1125,16 +1145,31 @@ app.post('/api/disruptions/crowd-reports', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   const body = req.body || {};
   const station_code = String(body.station_code || 'TNA').toUpperCase().trim();
-  const stn = formattedStations.find((s) => s.code === station_code) || { name: station_code };
+  const stn = formattedStations.find((s) => s.code === station_code);
+  if (!stn) {
+    return res.status(400).json({ success: false, error: 'Unknown station code.' });
+  }
+  const crowd_level = String(body.crowd_level || 'MEDIUM').toUpperCase();
+  if (!['LOW', 'MEDIUM', 'HIGH', 'SUPER_DENSE'].includes(crowd_level)) {
+    return res.status(400).json({ success: false, error: 'crowd_level must be LOW, MEDIUM, HIGH, or SUPER_DENSE.' });
+  }
+  const delay_observed_minutes = Number(body.delay_observed_minutes ?? 0);
+  if (!Number.isInteger(delay_observed_minutes) || delay_observed_minutes < 0 || delay_observed_minutes > 360) {
+    return res.status(400).json({ success: false, error: 'delay_observed_minutes must be a whole number between 0 and 360.' });
+  }
+  const comment = body.comment === undefined ? '' : body.comment;
+  if (typeof comment !== 'string' || comment.length > 300) {
+    return res.status(400).json({ success: false, error: 'comment must be text no longer than 300 characters.' });
+  }
 
   const newReport = {
     id: crowdReports.length ? Math.max(...crowdReports.map((r) => r.id)) + 1 : 1,
     station_code,
     station_name: stn.name,
-    crowd_level: body.crowd_level || 'MEDIUM',
+    crowd_level,
     direction: body.direction || 'UP_CSMT',
-    delay_observed_minutes: Number(body.delay_observed_minutes || 0),
-    comment: body.comment || '',
+    delay_observed_minutes,
+    comment,
     reported_at: new Date().toISOString(),
     verified_count: 1,
   };
@@ -1274,9 +1309,16 @@ app.get('/api/coach-layout', (req, res) => {
 // ==========================================
 app.post('/api/ai/ask', async (req, res) => {
   res.setHeader('Content-Type', 'application/json');
-  const query = (req.body?.query || '').trim();
+  const rawQuery = req.body?.query;
+  if (rawQuery !== undefined && typeof rawQuery !== 'string') {
+    return res.status(400).json({ success: false, error: 'Query must be text.' });
+  }
+  const query = (rawQuery || '').trim();
   if (!query) {
     return res.status(400).json({ error: 'Query is required' });
+  }
+  if (query.length > 2000) {
+    return res.status(400).json({ success: false, error: 'Query must be no longer than 2000 characters.' });
   }
 
   try {

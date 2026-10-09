@@ -193,8 +193,16 @@ def format_time(mins):
     return f"{h:02d}:{m:02d}"
 
 def parse_time(time_str):
-    parts = [int(x) for x in time_str.split(":")]
-    return parts[0] * 60 + parts[1]
+    """Parse a 24-hour HH:MM value and return minutes after midnight."""
+    if not isinstance(time_str, str):
+        raise ValueError("Time must be a string in HH:MM format")
+    parts = time_str.strip().split(":")
+    if len(parts) != 2 or any(not part.isdigit() for part in parts):
+        raise ValueError(f"Invalid time {time_str!r}; expected HH:MM")
+    hours, minutes = map(int, parts)
+    if not (0 <= hours < 24 and 0 <= minutes < 60):
+        raise ValueError(f"Invalid 24-hour time {time_str!r}")
+    return hours * 60 + minutes
 
 
 # Branch runtimes from originating station to Kalyan (in minutes)

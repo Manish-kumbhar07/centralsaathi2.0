@@ -16,21 +16,19 @@ import sys
 import json
 import sqlite3
 import os
+from contextlib import closing
 from datetime import datetime
 from railway_db import get_connection
 
 def get_all_railway_updates():
     """Retrieves all active railway alerts sorted by strict operational priority."""
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("""
+    with closing(get_connection()) as conn:
+        rows = conn.execute("""
     SELECT id, title, description, alert_type, line, affected_stations,
            start_time, end_time, severity, impact, advice, source, published_at, is_active
     FROM railway_alerts
     WHERE is_active = 1
-    """)
-    rows = cur.fetchall()
-    conn.close()
+        """).fetchall()
 
     alerts = [dict(r) for r in rows]
 
@@ -72,14 +70,11 @@ def check_route_for_alerts(origin_code, dest_code, travel_date=None):
     Checks if a journey between origin and destination is affected by an active alert or mega block.
     Returns smart alert object if affected.
     """
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM railway_alerts WHERE is_active = 1")
-    rows = cur.fetchall()
-    conn.close()
+    with closing(get_connection()) as conn:
+        rows = conn.execute("SELECT * FROM railway_alerts WHERE is_active = 1").fetchall()
 
-    origin_code = origin_code.upper()
-    dest_code = dest_code.upper()
+    origin_code = str(origin_code or "").strip().upper()
+    dest_code = str(dest_code or "").strip().upper()
 
     affected_alerts = []
     for r in rows:

@@ -20,12 +20,15 @@ from railway_db import get_connection
 from railway_news import check_route_for_alerts
 
 def parse_time_mins(time_str):
-    try:
-        parts = [int(x) for x in time_str.split(":")]
-        return parts[0] * 60 + parts[1]
-    except Exception:
-        now = datetime.now()
-        return now.hour * 60 + now.minute
+    if not isinstance(time_str, str):
+        raise ValueError("Time must be in HH:MM format")
+    parts = time_str.strip().split(":")
+    if len(parts) != 2 or any(not part.isdigit() for part in parts):
+        raise ValueError(f"Invalid time {time_str!r}; expected HH:MM")
+    hours, minutes = map(int, parts)
+    if not (0 <= hours < 24 and 0 <= minutes < 60):
+        raise ValueError(f"Invalid 24-hour time {time_str!r}")
+    return hours * 60 + minutes
 
 def format_mins_to_time(mins):
     total = int(mins) % (24 * 60)
@@ -365,12 +368,17 @@ def calculate_route(origin_query, dest_query, time_query="12:42", date_query=Non
         return {"success": False, "error": "Origin and destination stations cannot be identical."}
 
     # 2. Parse Time & Travel Date
-    query_time_mins = parse_time_mins(time_query)
+    try:
+        query_time_mins = parse_time_mins(time_query)
+    except ValueError as exc:
+        conn.close()
+        return {"success": False, "error": str(exc)}
     if date_query:
         try:
             travel_date = datetime.strptime(date_query, "%Y-%m-%d").date()
-        except Exception:
-            travel_date = date.today()
+        except ValueError:
+            conn.close()
+            return {"success": False, "error": "Travel date must use YYYY-MM-DD format."}
     else:
         travel_date = date.today()
 

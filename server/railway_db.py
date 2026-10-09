@@ -23,8 +23,9 @@ from datetime import datetime
 DB_PATH = os.path.join(os.path.dirname(__file__), "central_saathi.db")
 
 def get_connection():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=10)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
 def init_database():
@@ -172,8 +173,9 @@ def init_database():
     def add_col_if_missing(table, column, col_type):
         try:
             cursor.execute(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}")
-        except Exception:
-            pass
+        except sqlite3.OperationalError as exc:
+            if "duplicate column name" not in str(exc).lower():
+                raise
 
     add_col_if_missing("stations", "marathi_name", "TEXT")
     add_col_if_missing("stations", "door_side", "TEXT DEFAULT 'Left'")

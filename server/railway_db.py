@@ -191,6 +191,7 @@ def init_database():
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_trains_dir ON trains(direction, line);")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_trains_days ON trains(service_days);")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_stations_code ON stations(station_code);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_railway_alerts_title ON railway_alerts(title);")
 
     conn.commit()
     conn.close()

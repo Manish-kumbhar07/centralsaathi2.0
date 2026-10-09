@@ -26,6 +26,7 @@ import sys
 import time
 import logging
 import sqlite3
+import shutil
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 
@@ -237,6 +238,40 @@ class RailwayScraper:
 
         return results
 
+    def _resolve_chrome_runtime(self) -> tuple[Optional[str], Optional[str]]:
+        """Find Chrome/Chromium and ChromeDriver in a cross-platform, non-breaking way."""
+        browser_candidates = [
+            "google-chrome",
+            "google-chrome-stable",
+            "chromium",
+            "chromium-browser",
+            "chrome",
+            "msedge",
+        ]
+        browser_paths = [
+            "/usr/bin/chromium",
+            "/usr/bin/chromium-browser",
+            "/usr/bin/google-chrome",
+            "/usr/bin/google-chrome-stable",
+            r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+            r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+            r"C:\Program Files\Chromium\Application\chrome.exe",
+            r"C:\Program Files (x86)\Chromium\Application\chrome.exe",
+        ]
+        driver_candidates = ["chromedriver", "chromedriver.exe"]
+
+        browser_path = next((candidate for candidate in browser_paths if candidate and os.path.exists(candidate)), None)
+        if browser_path is None:
+            browser_path = next((shutil.which(candidate) for candidate in browser_candidates if shutil.which(candidate)), None)
+
+        driver_path = next((shutil.which(candidate) for candidate in driver_candidates if shutil.which(candidate)), None)
+        if driver_path is None:
+            linux_driver = "/usr/bin/chromedriver"
+            if os.path.exists(linux_driver):
+                driver_path = linux_driver
+
+        return driver_path, browser_path
+
     # =========================================================================
     # 2. SELENIUM HEADLESS BROWSER PIPELINE
     # =========================================================================
@@ -258,15 +293,12 @@ class RailwayScraper:
         chrome_options.add_argument("--window-size=1280,800")
         chrome_options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 CentralSaathi/2.0")
 
-        # Determine chrome/chromedriver paths if available
-        chromedriver_path = "/usr/bin/chromedriver"
-        if os.path.exists("/usr/bin/chromium"):
-            chrome_options.binary_location = "/usr/bin/chromium"
-        elif os.path.exists("/usr/bin/chromium-browser"):
-            chrome_options.binary_location = "/usr/bin/chromium-browser"
+        chromedriver_path, browser_path = self._resolve_chrome_runtime()
+        if browser_path:
+            chrome_options.binary_location = browser_path
 
         try:
-            service = ChromeService(executable_path=chromedriver_path) if os.path.exists(chromedriver_path) else None
+            service = ChromeService(executable_path=chromedriver_path) if chromedriver_path else None
             if service:
                 driver = webdriver.Chrome(service=service, options=chrome_options)
             else:

@@ -678,7 +678,7 @@ def generate_station_svg_map(fac):
 
 def get_station_facilities(station_code):
     """Retrieves full facilities and platform layout data for given station code."""
-    code = station_code.upper().strip()
+    code = str(station_code or "").upper().strip()
     
     fac = None
     if code in STATION_FACILITIES_DATABASE:
@@ -716,7 +716,7 @@ def list_all_stations_facilities():
     results = []
     if os.path.exists(DB_PATH):
         try:
-            conn = sqlite3.connect(DB_PATH)
+            conn = sqlite3.connect(DB_PATH, timeout=10)
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
             cur.execute("SELECT * FROM stations ORDER BY dist_from_csmt_km ASC")

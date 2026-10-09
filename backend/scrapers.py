@@ -14,6 +14,7 @@ import os
 import sys
 import logging
 import sqlite3
+import shutil
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 
@@ -25,6 +26,23 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] [Scr
 logger = logging.getLogger("Scraper")
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "railway.db")
+
+
+def resolve_db_path() -> str:
+    """Prefer the active project database without changing the existing default behavior."""
+    candidate_paths = [
+        DB_PATH,
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "server", "central_saathi.db"),
+        os.path.join(os.getcwd(), "server", "central_saathi.db"),
+        os.path.join(os.getcwd(), "railway.db"),
+    ]
+
+    for path in candidate_paths:
+        abs_path = os.path.abspath(path)
+        if os.path.exists(abs_path):
+            return abs_path
+    return os.path.abspath(DB_PATH)
+
 
 CR_PORTAL_URL = "https://cr.indianrailways.gov.in"
 CR_PRESS_RELEASES_URL = "https://cr.indianrailways.gov.in/view_section.jsp?lang=0&id=0,4,268"
@@ -39,7 +57,8 @@ DEFAULT_HEADERS = {
 }
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
+    db_path = resolve_db_path()
+    conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -149,6 +168,37 @@ class RailwayScraper:
         logger.info(f"Saved {len(advisories)} advisories into SQLite via BeautifulSoup4")
         return advisories
 
+    def _resolve_chrome_runtime(self):
+        """Find a valid local Chrome/Chromium and matching ChromeDriver without altering scraper behavior."""
+        browser_candidates = [
+            "google-chrome",
+            "google-chrome-stable",
+            "chromium",
+            "chromium-browser",
+            "chrome",
+            "msedge",
+        ]
+        browser_paths = [
+            "/usr/bin/chromium",
+            "/usr/bin/chromium-browser",
+            "/usr/bin/google-chrome",
+            "/usr/bin/google-chrome-stable",
+            r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+            r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+            r"C:\Program Files\Chromium\Application\chrome.exe",
+            r"C:\Program Files (x86)\Chromium\Application\chrome.exe",
+        ]
+
+        browser_path = next((path for path in browser_paths if path and os.path.exists(path)), None)
+        if browser_path is None:
+            browser_path = next((shutil.which(name) for name in browser_candidates if shutil.which(name)), None)
+
+        driver_path = next((shutil.which(name) for name in ["chromedriver", "chromedriver.exe"] if shutil.which(name)), None)
+        if driver_path is None and os.path.exists("/usr/bin/chromedriver"):
+            driver_path = "/usr/bin/chromedriver"
+
+        return driver_path, browser_path
+
     def scrape_with_selenium(self, target_url: str = NTES_PORTAL_URL) -> Dict[str, Any]:
         """
         Uses Selenium to scrape JavaScript-rendered train status or NTES portal.
@@ -179,8 +229,14 @@ class RailwayScraper:
             options.add_argument("--window-size=1280,720")
             options.add_argument(f"user-agent={DEFAULT_HEADERS['User-Agent']}")
 
-            # Try initializing Chrome WebDriver
-            driver = webdriver.Chrome(options=options)
+            driver_path, browser_path = self._resolve_chrome_runtime()
+            if browser_path:
+                options.binary_location = browser_path
+
+            if driver_path:
+                driver = webdriver.Chrome(service=Service(driver_path), options=options)
+            else:
+                driver = webdriver.Chrome(options=options)
             driver.set_page_load_timeout(15)
             driver.get(target_url)
 

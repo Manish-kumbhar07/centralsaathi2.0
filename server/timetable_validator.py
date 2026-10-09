@@ -22,6 +22,9 @@ import os
 from datetime import datetime
 from typing import Dict, List, Set, Any, Tuple, Optional
 
+# Runtime-safe maintenance note: validation checks are strict by design; preserve
+# all failure conditions and accepted timetable formats when revising this file.
+
 class TimetableValidationError(Exception):
     """Raised when timetable data fails strict railway validation rules."""
     def __init__(self, message: str, errors: Optional[List[str]] = None):
@@ -30,6 +33,8 @@ class TimetableValidationError(Exception):
 
 TIME_REGEX = re.compile(r"^([01]\d|2[0-3]):([0-5]\d)$")
 
+# Runtime-safe maintenance note: validation rules are intentionally strict; any edits here
+# must preserve all railway data rejection and acceptance checks without altering semantics.
 VALID_TRAIN_TYPES = {"SLOW", "FAST", "AC", "AC_FAST", "AC_SLOW", "SEMI_FAST", "HARBOUR_SLOW", "TRANS_HARBOUR"}
 VALID_DIRECTIONS = {"UP", "DOWN"}
 VALID_SERVICE_DAYS = {"DAILY", "MON_SAT", "SUN_ONLY", "MON_FRI", "WEEKDAYS"}

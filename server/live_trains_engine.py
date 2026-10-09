@@ -378,7 +378,9 @@ def fetch_single_train(train_number, query_time=None):
 
     # 1. Lookup train
     cur.execute("""
-    SELECT * FROM trains
+    SELECT id, train_number, train_name, train_type, is_ac, cars, direction,
+           source_station_code, destination_station_code
+    FROM trains
     WHERE train_number = ? OR UPPER(train_name) LIKE UPPER(?)
     LIMIT 1
     """, (train_number, f"%{train_number}%"))

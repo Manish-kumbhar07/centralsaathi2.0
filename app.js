@@ -35,6 +35,10 @@ let currentServiceFilter = 'ALL';
 let currentOriginCode = 'TNA';
 let currentDestCode = 'CSMT';
 
+function normalizeStationSearchText(value) {
+  return String(value ?? '').trim().normalize('NFC').toLocaleLowerCase();
+}
+
 // GPS & Wake Alarm State
 let gpsWatchId = null;
 let simulationInterval = null;
@@ -1350,7 +1354,7 @@ window.filterMapStationSearch = function(query) {
   const dropdown = document.getElementById('mapStationSearchDropdown');
   if (!dropdown) return;
 
-  const q = String(query || '').trim().toLowerCase();
+  const q = normalizeStationSearchText(query);
   
   // If query is empty, show curated Central Line stations directory
   if (!q) {
@@ -1381,9 +1385,9 @@ window.filterMapStationSearch = function(query) {
   }
 
   const matches = allStations.filter(s =>
-    s.name.toLowerCase().includes(q) ||
-    s.code.toLowerCase().includes(q) ||
-    (s.marathi_name && s.marathi_name.includes(q))
+    normalizeStationSearchText(s.name).includes(q) ||
+    normalizeStationSearchText(s.code).includes(q) ||
+    normalizeStationSearchText(s.marathi_name).includes(q)
   ).slice(0, 8);
 
   if (matches.length === 0) {
@@ -2031,11 +2035,11 @@ function filterHeroDropdown(type, query) {
   const dropdown = document.getElementById(type === 'origin' ? 'heroOriginDropdown' : 'heroDestDropdown');
   if (!dropdown) return;
 
-  const q = (query || '').trim().toLowerCase();
+  const q = normalizeStationSearchText(query);
   const matched = allStations.filter(s => {
-    return s.code.toLowerCase().includes(q) ||
-           s.name.toLowerCase().includes(q) ||
-           (s.marathi_name && s.marathi_name.includes(q));
+    return normalizeStationSearchText(s.code).includes(q) ||
+           normalizeStationSearchText(s.name).includes(q) ||
+           normalizeStationSearchText(s.marathi_name).includes(q);
   }).slice(0, 10);
 
   if (matched.length === 0) {
@@ -2181,11 +2185,11 @@ function filterStationDropdown(type, query) {
   const dropdown = document.getElementById(type === 'origin' ? 'originDropdown' : 'destDropdown');
   if (!dropdown) return;
 
-  const q = (query || '').trim().toLowerCase();
+  const q = normalizeStationSearchText(query);
   const matched = allStations.filter(s => {
-    return s.code.toLowerCase().includes(q) ||
-           s.name.toLowerCase().includes(q) ||
-           (s.marathi_name && s.marathi_name.includes(q));
+    return normalizeStationSearchText(s.code).includes(q) ||
+           normalizeStationSearchText(s.name).includes(q) ||
+           normalizeStationSearchText(s.marathi_name).includes(q);
   }).slice(0, 10);
 
   if (matched.length === 0) {

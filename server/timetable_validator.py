@@ -87,7 +87,9 @@ def validate_station(stn: Dict[str, Any], seen_codes: Set[str]) -> List[str]:
     if lat is not None and lng is not None:
         try:
             lat_f, lng_f = float(lat), float(lng)
-            if not (18.5 <= lat_f <= 20.5) or not (72.5 <= lng_f <= 74.0):
+            if not (-90 <= lat_f <= 90) or not (-180 <= lng_f <= 180):
+                errors.append(f"Station '{code}' coordinates ({lat_f}, {lng_f}) are outside valid latitude/longitude ranges.")
+            elif not (18.5 <= lat_f <= 20.5) or not (72.5 <= lng_f <= 74.0):
                 errors.append(f"Station '{code}' coordinates ({lat_f}, {lng_f}) fall outside Mumbai metropolitan railway bounds.")
         except (ValueError, TypeError):
             errors.append(f"Station '{code}' coordinates invalid numeric format.")
@@ -227,6 +229,11 @@ def validate_dataset(data: Dict[str, Any]) -> Tuple[bool, List[str], Dict[str, A
     Returns (is_valid, all_errors, summary_stats).
     """
     all_errors: List[str] = []
+    if not isinstance(data, dict):
+        return False, ["Dataset root must be a JSON object."], {
+            "is_valid": False, "total_stations": 0, "total_trains": 0,
+            "total_stops": 0, "total_versions": 0, "errors_count": 1
+        }
 
     # 1. Validate Timetable Versions
     versions = data.get("timetable_versions", [])

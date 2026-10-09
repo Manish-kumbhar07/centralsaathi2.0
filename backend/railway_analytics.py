@@ -46,13 +46,29 @@ DB_PATH = os.path.join(BASE_DIR, "server", "central_saathi.db")
 
 class RailwayAnalyticsEngine:
     def __init__(self, db_path: str = DB_PATH):
-        self.db_path = db_path
+        self.db_path = self._resolve_db_path(db_path)
+
+    def _resolve_db_path(self, db_path: str = DB_PATH) -> str:
+        """Resolve the SQLite database path without changing runtime behavior."""
+        candidate_paths = []
+        if db_path:
+            candidate_paths.append(db_path)
+
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        candidate_paths.extend([
+            os.path.join(base_dir, "server", "central_saathi.db"),
+            os.path.join(os.getcwd(), "server", "central_saathi.db"),
+            os.path.join(os.getcwd(), "central_saathi.db"),
+        ])
+
+        for path in candidate_paths:
+            candidate = os.path.abspath(path)
+            if os.path.exists(candidate):
+                return candidate
+        return os.path.abspath(candidate_paths[0]) if candidate_paths else DB_PATH
 
     def _get_connection(self) -> sqlite3.Connection:
-        if not os.path.exists(self.db_path):
-            alt_path = os.path.join(os.getcwd(), "server", "central_saathi.db")
-            if os.path.exists(alt_path):
-                self.db_path = alt_path
+        self.db_path = self._resolve_db_path(self.db_path)
         conn = sqlite3.connect(self.db_path)
         return conn
 

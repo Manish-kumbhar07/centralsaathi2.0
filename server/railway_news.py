@@ -78,8 +78,8 @@ def check_route_for_alerts(origin_code, dest_code, travel_date=None):
     rows = cur.fetchall()
     conn.close()
 
-    origin_code = origin_code.upper()
-    dest_code = dest_code.upper()
+    origin_code = str(origin_code or "").strip().upper()
+    dest_code = str(dest_code or "").strip().upper()
 
     affected_alerts = []
     for r in rows:

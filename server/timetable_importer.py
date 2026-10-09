@@ -707,17 +707,21 @@ class TimetableImporter:
             ))
             train_id = cur.lastrowid
             stops = train_data.get("stops", [])
-            for idx, stop in enumerate(stops):
-                seq = stop.get("sequence", idx + 1)
-                cur.execute("""
+            cur.executemany(
+                """
                 INSERT INTO train_stops (
                     train_id, station_code, sequence, arrival_time, departure_time, halt_seconds, platform
                 ) VALUES (?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    train_id, stop["station_code"], seq,
-                    stop["arrival_time"], stop["departure_time"],
-                    stop.get("halt_seconds", 30), stop.get("platform", "PF 1")
-                ))
+                """,
+                (
+                    (
+                        train_id, stop["station_code"], stop.get("sequence", idx + 1),
+                        stop["arrival_time"], stop["departure_time"],
+                        stop.get("halt_seconds", 30), stop.get("platform", "PF 1")
+                    )
+                    for idx, stop in enumerate(stops)
+                ),
+            )
             self.conn.commit()
             return True, None
         except Exception as e:

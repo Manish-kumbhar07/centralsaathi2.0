@@ -11,6 +11,7 @@ import os
 import json
 import argparse
 import sqlite3
+from contextlib import closing
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "central_saathi.db")
 
@@ -685,12 +686,11 @@ def get_station_facilities(station_code):
         fac = dict(STATION_FACILITIES_DATABASE[code])
     elif os.path.exists(DB_PATH):
         try:
-            conn = sqlite3.connect(DB_PATH)
-            conn.row_factory = sqlite3.Row
-            cur = conn.cursor()
-            cur.execute("SELECT * FROM stations WHERE UPPER(station_code) = ?", (code,))
-            row = cur.fetchone()
-            conn.close()
+            with closing(sqlite3.connect(DB_PATH, timeout=10)) as conn:
+                conn.row_factory = sqlite3.Row
+                row = conn.execute(
+                    "SELECT * FROM stations WHERE UPPER(station_code) = ?", (code,)
+                ).fetchone()
             if row:
                 fac = generate_default_facilities(
                     row["station_code"],
@@ -700,8 +700,8 @@ def get_station_facilities(station_code):
                     bool(row["is_fast_stop"]),
                     row["platforms"]
                 )
-        except Exception:
-            pass
+        except sqlite3.Error as exc:
+            print(f"[StationFacilities] Database lookup failed for {code}: {exc}", file=sys.stderr)
 
     if not fac:
         fac = generate_default_facilities(code, code, code, 0, False, 2)
@@ -716,18 +716,16 @@ def list_all_stations_facilities():
     results = []
     if os.path.exists(DB_PATH):
         try:
-            conn = sqlite3.connect(DB_PATH, timeout=10)
-            conn.row_factory = sqlite3.Row
-            cur = conn.cursor()
-            cur.execute("SELECT * FROM stations ORDER BY dist_from_csmt_km ASC")
-            for r in cur.fetchall():
+            with closing(sqlite3.connect(DB_PATH, timeout=10)) as conn:
+                conn.row_factory = sqlite3.Row
+                rows = conn.execute("SELECT * FROM stations ORDER BY dist_from_csmt_km ASC").fetchall()
+            for r in rows:
                 code = r["station_code"]
                 fac = get_station_facilities(code)
                 results.append(fac)
-            conn.close()
             return results
-        except Exception:
-            pass
+        except sqlite3.Error as exc:
+            print(f"[StationFacilities] Database listing failed: {exc}", file=sys.stderr)
     return [get_station_facilities(code) for code in STATION_FACILITIES_DATABASE]
 
 def main():

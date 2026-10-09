@@ -152,13 +152,12 @@
       content: '';
     }
 
-    /* Hero Atmospheric Backdrop with deep dusk railway aesthetic */
+    /* Hero Atmospheric Backdrop: Sleek solid railway midnight tone without background images */
     .hero-bg-atmospheric {
-      background: linear-gradient(90deg, rgba(7, 19, 30, 0.94) 0%, rgba(7, 19, 30, 0.82) 38%, rgba(7, 19, 30, 0.22) 75%, rgba(7, 19, 30, 0.35) 100%),
-                  radial-gradient(ellipse at 80% 50%, rgba(217, 119, 6, 0.20) 0%, rgba(7, 19, 30, 0) 70%),
-                  url('/assets/mumbai_railway_hero.svg') right center / cover no-repeat;
-      background-color: #07131e;
-      transition: background 0.4s ease;
+      background: #07131e !important;
+      background-color: #07131e !important;
+      background-image: none !important;
+      transition: background-color 0.3s ease;
     }
 
     /* Gauge needle styling */
@@ -278,87 +277,107 @@
         </button>
       </div>
 
-      <!-- Presets Grid -->
-      <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2.5">Curated Railway Themes</div>
+      <!-- Presets Grid with Authentic Photographs -->
+      <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2.5">Authentic Railway Wallpapers</div>
       <div class="grid grid-cols-2 gap-2.5 mb-4">
-        <!-- Preset 1: Dusk EMU (Default) -->
+        <!-- Preset 1: Iconic EMU Local Photo (Default) -->
         <button 
-          onclick="selectPresetBg('dusk')" 
-          class="bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700 hover:border-emerald-500 rounded-2xl p-2.5 text-left transition-all group relative overflow-hidden flex flex-col justify-between h-24"
+          onclick="selectPresetBg('real_emu')" 
+          class="bg-slate-900/90 hover:bg-slate-800/90 border border-emerald-600/80 hover:border-emerald-400 rounded-2xl p-2.5 text-left transition-all group relative overflow-hidden flex flex-col justify-between h-28"
         >
-          <div class="h-10 rounded-xl w-full bg-gradient-to-r from-amber-700 via-orange-800 to-slate-900 border border-white/10 mb-2 flex items-center justify-end px-2">
-            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-500/80 text-white uppercase">Default</span>
+          <div class="h-12 rounded-xl w-full bg-cover bg-center border border-white/10 mb-1.5 flex items-start justify-end p-1.5" style="background-image: url('/assets/mumbai_local_emu_real.jpg');">
+            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-500/90 text-white uppercase shadow-sm">Real Photo</span>
           </div>
           <div>
-            <div class="text-xs font-bold text-white group-hover:text-emerald-300">Dusk EMU Twilight</div>
-            <div class="text-[10px] text-slate-400 truncate">Golden hour Mumbai local</div>
+            <div class="text-xs font-bold text-white group-hover:text-emerald-300">Iconic Central EMU Local</div>
+            <div class="text-[10px] text-slate-300 truncate">Authentic CR Suburban rake</div>
           </div>
         </button>
 
-        <!-- Preset 2: Midnight Electric Rail -->
+        <!-- Preset 2: Fast Corridor Tracks Photo -->
         <button 
-          onclick="selectPresetBg('midnight')" 
-          class="bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700 hover:border-cyan-500 rounded-2xl p-2.5 text-left transition-all group relative overflow-hidden flex flex-col justify-between h-24"
+          onclick="selectPresetBg('real_track')" 
+          class="bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700 hover:border-cyan-500 rounded-2xl p-2.5 text-left transition-all group relative overflow-hidden flex flex-col justify-between h-28"
         >
-          <div class="h-10 rounded-xl w-full bg-gradient-to-r from-cyan-900 via-blue-950 to-slate-950 border border-white/10 mb-2 flex items-center justify-end px-2">
-            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-cyan-500/80 text-white uppercase">Night</span>
+          <div class="h-12 rounded-xl w-full bg-cover bg-center border border-white/10 mb-1.5 flex items-start justify-end p-1.5" style="background-image: url('/assets/mumbai_local_track_real.jpg');">
+            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-cyan-600/90 text-white uppercase shadow-sm">Fast Line</span>
           </div>
           <div>
-            <div class="text-xs font-bold text-white group-hover:text-cyan-300">Midnight Electric</div>
-            <div class="text-[10px] text-slate-400 truncate">Cyber neon catenary tracks</div>
+            <div class="text-xs font-bold text-white group-hover:text-cyan-300">Main Line Corridor</div>
+            <div class="text-[10px] text-slate-300 truncate">Suburban route in motion</div>
           </div>
         </button>
 
-        <!-- Preset 3: Monsoon Kasara Ghat -->
+        <!-- Preset 3: Modern AC Local Photo -->
         <button 
-          onclick="selectPresetBg('monsoon')" 
-          class="bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700 hover:border-teal-500 rounded-2xl p-2.5 text-left transition-all group relative overflow-hidden flex flex-col justify-between h-24"
+          onclick="selectPresetBg('real_ac')" 
+          class="bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700 hover:border-teal-500 rounded-2xl p-2.5 text-left transition-all group relative overflow-hidden flex flex-col justify-between h-28"
         >
-          <div class="h-10 rounded-xl w-full bg-gradient-to-r from-emerald-950 via-teal-900 to-slate-900 border border-white/10 mb-2 flex items-center justify-end px-2">
-            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-teal-500/80 text-white uppercase">Monsoon</span>
+          <div class="h-12 rounded-xl w-full bg-cover bg-center border border-white/10 mb-1.5 flex items-start justify-end p-1.5" style="background-image: url('/assets/mumbai_ac_local_real.jpg');">
+            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-teal-600/90 text-white uppercase shadow-sm">AC Local</span>
           </div>
           <div>
-            <div class="text-xs font-bold text-white group-hover:text-teal-300">Monsoon Kasara Ghat</div>
-            <div class="text-[10px] text-slate-400 truncate">Rain mist &amp; lush valleys</div>
+            <div class="text-xs font-bold text-white group-hover:text-teal-300">AC Suburban Express</div>
+            <div class="text-[10px] text-slate-300 truncate">Air-conditioned EMU rake</div>
           </div>
         </button>
 
         <!-- Preset 4: Victoria Terminus Heritage -->
         <button 
           onclick="selectPresetBg('heritage')" 
-          class="bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700 hover:border-amber-500 rounded-2xl p-2.5 text-left transition-all group relative overflow-hidden flex flex-col justify-between h-24"
+          class="bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700 hover:border-amber-500 rounded-2xl p-2.5 text-left transition-all group relative overflow-hidden flex flex-col justify-between h-28"
         >
-          <div class="h-10 rounded-xl w-full bg-gradient-to-r from-amber-950 via-stone-900 to-orange-950 border border-white/10 mb-2 flex items-center justify-end px-2">
-            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-600/80 text-white uppercase">Heritage</span>
+          <div class="h-12 rounded-xl w-full bg-gradient-to-r from-amber-950 via-stone-900 to-orange-950 border border-white/10 mb-1.5 flex items-start justify-end p-1.5">
+            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-600/90 text-white uppercase shadow-sm">Heritage</span>
           </div>
           <div>
             <div class="text-xs font-bold text-white group-hover:text-amber-300">Victoria Terminus VT</div>
-            <div class="text-[10px] text-slate-400 truncate">Gothic architectural dome</div>
+            <div class="text-[10px] text-slate-300 truncate">CSMT Gothic dome silhouette</div>
           </div>
         </button>
       </div>
 
       <!-- Upload Custom Wallpaper Section -->
-      <div class="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800 mb-4">
-        <div class="flex items-center justify-between mb-2">
-          <div class="text-xs font-bold text-slate-200">Upload Your Own Photo</div>
-          <span class="text-[10px] text-slate-400 font-mono">PNG, JPG, WEBP, SVG</span>
+      <div class="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800 mb-3 space-y-3">
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <div class="text-xs font-bold text-slate-200">Upload Your Own Image File</div>
+            <span class="text-[10px] text-slate-400 font-mono">PNG, JPG, WEBP</span>
+          </div>
+          <input type="file" id="heroCustomWallpaperFileInput" accept="image/*" class="hidden" onchange="handleHeroBgFileSelected(event)">
+          <label for="heroCustomWallpaperFileInput" class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-500 rounded-xl text-xs font-bold text-center text-slate-200 hover:text-white cursor-pointer transition-colors flex items-center justify-center gap-2">
+            <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" x2="12" y1="3" y2="15"/>
+            </svg>
+            <span>Choose Image From Device</span>
+          </label>
         </div>
-        <input type="file" id="heroCustomWallpaperFileInput" accept="image/*" class="hidden" onchange="handleHeroBgFileSelected(event)">
-        <label for="heroCustomWallpaperFileInput" class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-500 rounded-xl text-xs font-bold text-center text-slate-200 hover:text-white cursor-pointer transition-colors flex items-center justify-center gap-2">
-          <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" x2="12" y1="3" y2="15"/>
-          </svg>
-          <span>Choose Image From Device</span>
-        </label>
+
+        <div class="pt-2 border-t border-slate-800">
+          <div class="text-[11px] font-bold text-slate-300 mb-1.5">Or Paste Direct Image URL:</div>
+          <div class="flex gap-2">
+            <input 
+              type="url" 
+              id="heroBgUrlInput" 
+              placeholder="https://example.com/train-image.jpg"
+              class="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+            />
+            <button 
+              onclick="applyHeroBgFromUrl()" 
+              class="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+            >
+              Apply
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Footer Buttons -->
-      <div class="flex items-center justify-between pt-2">
+      <div class="flex items-center justify-between pt-1">
         <button onclick="resetHeroBgToDefault()" class="text-xs font-bold text-amber-400 hover:text-amber-300 underline underline-offset-4 transition-colors">
-          Reset to Default Wallpaper
+          Reset to Authentic Photo
         </button>
         <button onclick="toggleHeroBgModal(false)" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-bold transition-colors">
           Done
@@ -393,14 +412,8 @@
         
         <!-- Brand Identity -->
         <div class="flex items-center gap-3 cursor-pointer" onclick="switchAppTab('landing')">
-          <div class="w-9 h-9 rounded-xl bg-[#064e3b] flex items-center justify-center text-white shadow-sm">
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect width="16" height="16" x="4" y="3" rx="2"/>
-              <path d="M4 11h16"/>
-              <path d="M12 3v8"/>
-              <circle cx="8" cy="15" r="1" fill="currentColor"/>
-              <circle cx="16" cy="15" r="1" fill="currentColor"/>
-            </svg>
+          <div class="w-10 h-10 rounded-xl bg-[#064e3b] flex items-center justify-center text-white shadow-sm overflow-hidden p-1 border border-emerald-700/40">
+            <img src="/assets/central_saathi_logo.svg" alt="Central Saathi Logo" class="w-full h-full object-contain" />
           </div>
           <div>
             <div class="font-extrabold text-slate-900 tracking-tight text-base flex items-center gap-1.5">
@@ -438,23 +451,29 @@
             <!-- Dropdown submenu -->
             <div class="hidden group-hover:block absolute left-0 top-full pt-1 w-64 z-50">
               <div class="bg-white border border-slate-200 rounded-2xl shadow-xl p-2 space-y-1 text-xs">
-                <button onclick="switchAppTab('commuter-suite'); showCommuterSubTab('fares')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-800 font-semibold">
-                  Fare &amp; Season Pass Matrix
+                <button onclick="switchAppTab('commuter-suite'); showCommuterSubTab('fares')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-800 font-semibold flex items-center gap-2 cursor-pointer">
+                  <span>🧮</span>
+                  <span>Pass &amp; Fare Calculator</span>
                 </button>
-                <button onclick="switchAppTab('commuter-suite'); showCommuterSubTab('crowd')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-800 font-semibold">
-                  Peak Rush &amp; Coach Strategy
+                <button onclick="switchAppTab('commuter-suite'); showCommuterSubTab('crowd')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-800 font-semibold flex items-center gap-2 cursor-pointer">
+                  <span>🚃</span>
+                  <span>Coach &amp; Crowd Strategy</span>
                 </button>
-                <button onclick="switchAppTab('commuter-suite'); showCommuterSubTab('monsoon')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-800 font-semibold">
-                  Monsoon &amp; Flood Transit Guide
+                <button onclick="switchAppTab('commuter-suite'); showCommuterSubTab('doors')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-800 font-semibold flex items-center gap-2 cursor-pointer">
+                  <span>🚪</span>
+                  <span>Door-Side &amp; Exit Navigator</span>
                 </button>
-                <button onclick="switchAppTab('commuter-suite'); showCommuterSubTab('uts')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-800 font-semibold">
-                  UTS Mobile Ticketing Guide
+                <button onclick="switchAppTab('commuter-suite'); showCommuterSubTab('luggage')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-800 font-semibold flex items-center gap-2 cursor-pointer">
+                  <span>🚲</span>
+                  <span>Luggage &amp; Cycle Calculator</span>
                 </button>
-                <button onclick="switchAppTab('commuter-suite'); showCommuterSubTab('luggage')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-800 font-semibold">
-                  Luggage &amp; Bicycle Rules
+                <button onclick="switchAppTab('commuter-suite'); showCommuterSubTab('uts')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-800 font-semibold flex items-center gap-2 cursor-pointer">
+                  <span>💳</span>
+                  <span>UTS R-Wallet &amp; Geofence</span>
                 </button>
-                <button onclick="switchAppTab('commuter-suite'); showCommuterSubTab('charter')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-800 font-semibold">
-                  Passenger Charter &amp; Rights
+                <button onclick="switchAppTab('commuter-suite'); showCommuterSubTab('fines')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-800 font-semibold flex items-center gap-2 cursor-pointer">
+                  <span>⚖️</span>
+                  <span>AC Fine &amp; Medical Clinic</span>
                 </button>
               </div>
             </div>
@@ -503,7 +522,7 @@
                 <svg class="w-3.5 h-3.5 text-emerald-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
                 <span>Know Your Station</span>
               </button>
-              <button onclick="switchAppTab('commuter-suite')" class="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-100">Commuter Desk (Fares, Rules &amp; Rights)</button>
+              <button onclick="switchAppTab('commuter-suite')" class="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-100">Commuter Tools (Pass, Crowd &amp; Doors)</button>
               <button onclick="switchAppTab('my-personal')" class="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-amber-800 hover:bg-amber-50">My Personal Commute &amp; Pass</button>
               <button onclick="switchAppTab('speedometer')" class="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-100">Speed &amp; Wake Alarm</button>
               <button onclick="switchAppTab('blocks')" class="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-100">Mega Blocks</button>
@@ -526,27 +545,11 @@
     <!-- ============================================================ -->
     <section id="tab-landing" class="app-tab-panel flex-1 py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
       
-      <!-- HERO SECTION WITH EDITORIAL DISPLAY HEADLINE (LEFT-ALIGNED TO SHOWCASE WALLPAPER) -->
-      <div id="heroAtmosphericBanner" class="relative hero-bg-atmospheric rounded-3xl p-6 sm:p-10 lg:p-12 text-white overflow-hidden shadow-2xl mb-8 border border-white/10 transition-all duration-500 min-h-[540px] flex items-center">
+      <!-- HERO SECTION WITH EDITORIAL DISPLAY HEADLINE (SOLID MIDNIGHT RAILWAY THEME & CENTRAL SAATHI LOGO) -->
+      <div id="heroAtmosphericBanner" class="relative hero-bg-atmospheric rounded-3xl p-6 sm:p-10 lg:p-12 text-white overflow-hidden shadow-2xl mb-8 border border-white/10 transition-all duration-500 min-h-[520px] flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12">
         
-        <!-- Background Control Button in Top-Right Corner of Hero -->
-        <div class="absolute top-4 right-4 z-20 flex items-center gap-2">
-          <button 
-            id="openBgChooserBtn"
-            onclick="toggleHeroBgModal(true)"
-            class="px-3.5 py-1.5 bg-black/60 hover:bg-black/85 active:scale-95 backdrop-blur-md border border-white/20 hover:border-white/40 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-lg"
-            title="Change landing page background"
-          >
-            <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
-              <circle cx="9" cy="9" r="2"/>
-              <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
-            </svg>
-            <span id="currentHeroBgLabel">Change Background</span>
-          </button>
-        </div>
-
-        <div class="relative z-10 max-w-lg text-left py-4 mr-auto">
+        <!-- Left Column: Search & Corridor Planner -->
+        <div class="relative z-10 max-w-lg w-full text-left py-2">
           
           <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-xs font-semibold text-emerald-200 border border-white/15 mb-4">
             <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
@@ -657,6 +660,50 @@
               </button>
             </div>
 
+          </div>
+
+        </div>
+
+        <!-- Right Column: Official Central Saathi Logo Centerpiece in the Blank Space -->
+        <div class="relative z-10 flex flex-col items-center justify-center text-center p-4 lg:p-8 w-full lg:max-w-md shrink-0">
+          
+          <!-- Logo Container with Ambient Glow -->
+          <div class="relative group cursor-pointer" onclick="switchAppTab('landing')">
+            <div class="absolute -inset-4 bg-gradient-to-tr from-emerald-500/20 via-amber-500/20 to-sky-500/20 rounded-full blur-2xl opacity-60 group-hover:opacity-90 transition duration-700"></div>
+            
+            <div class="relative w-56 h-56 sm:w-64 sm:h-64 lg:w-72 lg:h-72 flex items-center justify-center p-2">
+              <img 
+                src="/assets/central_saathi_logo.svg" 
+                alt="Central Saathi Official Logo - Mumbai Suburban Railway Companion" 
+                class="w-full h-full object-contain drop-shadow-[0_16px_32px_rgba(0,0,0,0.6)] group-hover:scale-105 transition-transform duration-500"
+              />
+            </div>
+          </div>
+
+          <!-- Official Central Saathi Branding Details -->
+          <div class="mt-4 text-center space-y-2">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1 bg-white/10 backdrop-blur-md rounded-full text-xs font-bold text-amber-300 border border-white/15 shadow-sm">
+              <span>मध्य रेल साथी</span>
+              <span class="text-white/40">•</span>
+              <span>CENTRAL SAATHI</span>
+            </div>
+            
+            <p class="text-xs text-slate-300 font-medium tracking-wide max-w-xs">
+              Official Mumbai Suburban Commuter Companion &amp; Timetable Navigator
+            </p>
+
+            <!-- Suburban Network Badges -->
+            <div class="flex flex-wrap items-center justify-center gap-2 pt-1 text-[10px] text-slate-300 font-semibold">
+              <span class="px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Main Line
+              </span>
+              <span class="px-2 py-0.5 rounded-full bg-sky-950/60 border border-sky-500/30 text-sky-300 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span> Harbour
+              </span>
+              <span class="px-2 py-0.5 rounded-full bg-amber-950/60 border border-amber-500/30 text-amber-300 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Trans-Harbour
+              </span>
+            </div>
           </div>
 
         </div>
@@ -1506,38 +1553,47 @@
     </section>
 
     <!-- ============================================================ -->
-    <!-- TAB 4: COMMUTER HELPDESK SUITE (FARES, LUGGAGE, UTS, SAFETY, CHARTER) -->
+    <!-- TAB 4: COMMUTER TOOLKIT & TRANSIT UTILITIES -->
     <!-- ============================================================ -->
     <section id="tab-commuter-suite" class="app-tab-panel hidden flex-1 py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
       
-      <!-- Commuter Suite Internal Sub-Nav -->
+      <!-- Commuter Suite Internal Sub-Nav: 6 Interactive Digital Tools -->
       <div class="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl mb-6 text-xs font-bold text-slate-600">
-        <button class="commuter-subtab-btn px-3.5 py-2 rounded-xl transition-all bg-white text-slate-900 shadow-xs" data-subtab="fares">
-          Fare &amp; Season Pass Matrix
+        <button class="commuter-subtab-btn px-3.5 py-2 rounded-xl transition-all bg-white text-slate-900 shadow-xs flex items-center gap-1.5 cursor-pointer" data-subtab="fares" onclick="showCommuterSubTab('fares')">
+          <span>🧮</span>
+          <span>Pass &amp; Fare Calculator</span>
         </button>
-        <button class="commuter-subtab-btn px-3.5 py-2 rounded-xl transition-all hover:text-slate-900" data-subtab="crowd">
-          Peak Rush &amp; Coach Strategy
+        <button class="commuter-subtab-btn px-3.5 py-2 rounded-xl transition-all hover:text-slate-900 flex items-center gap-1.5 cursor-pointer" data-subtab="crowd" onclick="showCommuterSubTab('crowd')">
+          <span>🚃</span>
+          <span>Coach &amp; Crowd Strategy</span>
         </button>
-        <button class="commuter-subtab-btn px-3.5 py-2 rounded-xl transition-all hover:text-slate-900" data-subtab="monsoon">
-          Monsoon &amp; Flood Transit Guide
+        <button class="commuter-subtab-btn px-3.5 py-2 rounded-xl transition-all hover:text-slate-900 flex items-center gap-1.5 cursor-pointer" data-subtab="doors" onclick="showCommuterSubTab('doors')">
+          <span>🚪</span>
+          <span>Door-Side &amp; Exit Navigator</span>
         </button>
-        <button class="commuter-subtab-btn px-3.5 py-2 rounded-xl transition-all hover:text-slate-900" data-subtab="uts">
-          UTS Mobile Ticketing Guide
+        <button class="commuter-subtab-btn px-3.5 py-2 rounded-xl transition-all hover:text-slate-900 flex items-center gap-1.5 cursor-pointer" data-subtab="luggage" onclick="showCommuterSubTab('luggage')">
+          <span>🚲</span>
+          <span>Luggage &amp; Cycle Calculator</span>
         </button>
-        <button class="commuter-subtab-btn px-3.5 py-2 rounded-xl transition-all hover:text-slate-900" data-subtab="luggage">
-          Luggage &amp; Bicycle Rules
+        <button class="commuter-subtab-btn px-3.5 py-2 rounded-xl transition-all hover:text-slate-900 flex items-center gap-1.5 cursor-pointer" data-subtab="uts" onclick="showCommuterSubTab('uts')">
+          <span>💳</span>
+          <span>UTS R-Wallet &amp; Geofence</span>
         </button>
-        <button class="commuter-subtab-btn px-3.5 py-2 rounded-xl transition-all hover:text-slate-900" data-subtab="charter">
-          Passenger Charter &amp; Rights
+        <button class="commuter-subtab-btn px-3.5 py-2 rounded-xl transition-all hover:text-slate-900 flex items-center gap-1.5 cursor-pointer" data-subtab="fines" onclick="showCommuterSubTab('fines')">
+          <span>⚖️</span>
+          <span>AC Fine &amp; Medical Clinic</span>
         </button>
       </div>
 
-      <!-- SUBTAB 1: FARES & SEASON PASS MATRIX -->
+      <!-- TOOL 1: INTERACTIVE PASS & FARE CALCULATOR -->
       <div id="subtab-fares" class="commuter-panel bg-white border border-slate-200 rounded-3xl p-6 shadow-xs max-w-4xl mx-auto">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-3 mb-5 border-b border-slate-100">
           <div>
-            <h3 class="text-base font-bold text-slate-900">Suburban Fare &amp; Season Pass Matrix</h3>
-            <p class="text-xs text-slate-500 mt-0.5">Calculate verified Central Railway single, return, and season pass rates based on distance slabs.</p>
+            <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+              <span>Smart Pass &amp; Fare Savings Calculator</span>
+              <span class="text-[10px] font-black bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md uppercase">Live Rates</span>
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">Compare daily return tickets with monthly &amp; quarterly season passes. Calculate exact monthly money saved.</p>
           </div>
           <span class="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
             WTT 2026 Official Fare Structure
@@ -1546,16 +1602,16 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Origin Station (From):</label>
-            <select id="fareCalcOriginSelect" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"></select>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Boarding Station (From):</label>
+            <select id="fareCalcOriginSelect" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"></select>
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">Destination Station (To):</label>
-            <select id="fareCalcDestSelect" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"></select>
+            <select id="fareCalcDestSelect" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"></select>
           </div>
         </div>
 
-        <!-- Dynamic Results Grid -->
+        <!-- Dynamic Results Grid populated by calculateCustomFares() -->
         <div id="customFareResultGrid" class="space-y-4"></div>
 
         <!-- Official Fare Slabs Guide -->
@@ -1586,482 +1642,405 @@
         </div>
       </div>
 
-      <!-- SUBTAB 2: LUGGAGE & BICYCLE REGULATIONS -->
+      <!-- TOOL 2: INTERACTIVE 12-CAR COACH & CROWD OCCUPANCY TOOL -->
+      <div id="subtab-crowd" class="commuter-panel hidden bg-white border border-slate-200 rounded-3xl p-6 shadow-xs max-w-4xl mx-auto space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div>
+            <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+              <span>Interactive 12-Car Coach Rake &amp; Crowd Occupancy Tool</span>
+              <span class="text-[10px] font-black bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md uppercase">Click Any Coach</span>
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">Tap on individual coaches (Coach 1–12) to inspect live crowd density, compartment categories, and platform alignment.</p>
+          </div>
+          <span class="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+            Real-Time Occupancy Radar
+          </span>
+        </div>
+
+        <!-- Controls: Direction & Time Slot -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5">Travel Direction:</label>
+            <div class="grid grid-cols-2 gap-2">
+              <button type="button" id="btnCrowdDirUp" onclick="setCrowdDirection('UP')" class="p-2 rounded-xl border font-black transition-all bg-[#064e3b] text-white border-[#064e3b] shadow-2xs text-center">
+                🔻 UP (To CSMT)
+              </button>
+              <button type="button" id="btnCrowdDirDown" onclick="setCrowdDirection('DOWN')" class="p-2 rounded-xl border font-bold transition-all bg-white text-slate-700 border-slate-200 hover:bg-slate-100 text-center">
+                🔺 DOWN (To Kalyan)
+              </button>
+            </div>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5">Commute Time Window:</label>
+            <select id="crowdTimeSlotSelect" onchange="updateCoachCrowdSimulation()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+              <option value="MORNING_PEAK" selected>🌅 Morning Peak (08:00 – 11:30 AM)</option>
+              <option value="AFTERNOON_OFFPEAK">☀️ Afternoon Off-Peak (11:30 AM – 04:30 PM)</option>
+              <option value="EVENING_PEAK">🌇 Evening Rush (05:00 – 09:00 PM)</option>
+              <option value="LATE_NIGHT">🌙 Late Night (Post 09:00 PM)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Interactive Train Graphic: 12 Clickable Coach Blocks -->
+        <div>
+          <div class="flex items-center justify-between text-xs font-bold text-slate-700 mb-2">
+            <span class="flex items-center gap-1.5">
+              <span>🚆</span>
+              <span>12-Car Suburban EMU Rake (Tap any coach to inspect):</span>
+            </span>
+            <span class="text-[11px] text-slate-400 font-normal">Motorman (Coach 1) ➔ Guard (Coach 12)</span>
+          </div>
+
+          <div class="overflow-x-auto pb-2 no-scrollbar">
+            <div id="interactiveRakeContainer" class="flex items-center gap-2 min-w-[720px] p-2 bg-[#0b1f2e] rounded-2xl border border-slate-800 text-white">
+              <!-- Dynamically populated 12 clickable coach cards -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Coach Detailed Inspector Box (Updates dynamically on coach tap) -->
+        <div id="coachDetailInspectorBox" class="p-5 bg-gradient-to-br from-slate-50 to-emerald-50/30 border border-slate-200 rounded-2xl shadow-xs">
+          <!-- Populated by inspectCoach(coachNumber) -->
+        </div>
+
+        <!-- Smart Fast Boarding Recommendation -->
+        <div id="crowdSmartRecommendation" class="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-950 flex items-start gap-3">
+          <span class="text-xl">💡</span>
+          <div>
+            <strong class="font-extrabold text-emerald-900">Optimal Boarding Advice:</strong>
+            <p id="crowdRecommendationText" class="mt-0.5 text-emerald-800 leading-relaxed text-xs">
+              During morning peak, Coach 2 (General) and Coach 11 (General) have ~40% less boarding crush than central Coaches 5–7 which align directly with Dadar and Thane main foot-over-bridges.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOOL 3: DOOR-SIDE OPENING & FOB STAIRCASE NAVIGATOR -->
+      <div id="subtab-doors" class="commuter-panel hidden bg-white border border-slate-200 rounded-3xl p-6 shadow-xs max-w-4xl mx-auto space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div>
+            <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+              <span>Platform Door-Side &amp; Exit Navigator</span>
+              <span class="text-[10px] font-black bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md uppercase">Left vs Right</span>
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">Know whether doors will open Left or Right at every station on your route, plus FOB bridge alignment.</p>
+          </div>
+          <span class="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-blue-50 text-blue-800 border border-blue-200">
+            Exit Preparedness Tool
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Starting Station:</label>
+            <select id="doorCalcOriginSelect" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Deboarding Station:</label>
+            <select id="doorCalcDestSelect" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"></select>
+          </div>
+        </div>
+
+        <button type="button" onclick="calculateDoorSideRoute()" class="w-full py-2.5 px-4 bg-[#064e3b] hover:bg-[#047857] text-white rounded-xl text-xs font-extrabold shadow-sm transition-all flex items-center justify-center gap-2">
+          <span>🚪 Generate Door Opening Sequence &amp; FOB Positions</span>
+          <span>➔</span>
+        </button>
+
+        <!-- Dynamic Door Route Timeline Container -->
+        <div id="doorRouteResultContainer" class="space-y-3 pt-2">
+          <!-- Populated by calculateDoorSideRoute() -->
+        </div>
+      </div>
+
+      <!-- TOOL 4: LUGGAGE & BICYCLE TARIFF CALCULATOR -->
       <div id="subtab-luggage" class="commuter-panel hidden bg-white border border-slate-200 rounded-3xl p-6 shadow-xs max-w-4xl mx-auto space-y-6">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
           <div>
-            <h3 class="text-base font-bold text-slate-900">Suburban Luggage &amp; Bicycle Carriage Rules</h3>
-            <p class="text-xs text-slate-500 mt-0.5">Official Central Railway carriage quotas, allowable dimensions, bicycle rules, and penalty structures.</p>
+            <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+              <span>Suburban Luggage &amp; Bicycle Permit Calculator</span>
+              <span class="text-[10px] font-black bg-purple-100 text-purple-800 px-2 py-0.5 rounded-md uppercase">Instant Tariff</span>
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">Check permissible items, permissible compartments, allowed off-peak cycle hours, and calculate booking tariff.</p>
           </div>
-          <span class="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-blue-50 text-blue-800 border border-blue-200">
+          <span class="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-purple-50 text-purple-800 border border-purple-200">
             Railways Act 1989 Compliant
           </span>
         </div>
 
-        <!-- 3 Feature Cards Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <!-- Card 1: Free Allowance -->
-          <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-            <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold mb-2.5 text-sm">
-              🧳
-            </div>
-            <h4 class="text-xs font-bold text-slate-900 mb-1">Free Baggage Allowance</h4>
-            <div class="space-y-1.5 text-xs text-slate-600">
-              <div class="flex justify-between py-1 border-b border-slate-200">
-                <span>Second Class:</span>
-                <strong class="text-slate-900">35 kg / passenger</strong>
-              </div>
-              <div class="flex justify-between py-1 border-b border-slate-200">
-                <span>First Class &amp; AC:</span>
-                <strong class="text-slate-900">40 kg / passenger</strong>
-              </div>
-              <div class="flex justify-between py-1 border-b border-slate-200">
-                <span>Marginal Allowance:</span>
-                <span class="text-slate-600">+10 kg (no fine)</span>
-              </div>
-              <div class="flex justify-between py-1">
-                <span>Children (5-12 yrs):</span>
-                <span class="text-slate-600">Half allowance</span>
-              </div>
-            </div>
-            <p class="text-[10px] text-slate-400 mt-2">Max trunk size: 100cm × 60cm × 25cm</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Item Category:</label>
+            <select id="luggageTypeSelect" onchange="calculateLuggageTariff()" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+              <option value="SUITCASE">🧳 Personal Suitcase / Backpack</option>
+              <option value="BICYCLE" selected>🚲 Bicycle / Foldable Cycle</option>
+              <option value="VENDOR">🧺 Vendor Basket / Flowers / Milk Cans</option>
+              <option value="PARCEL">📦 Heavy Commercial Parcel / Trunk</option>
+              <option value="PET">🐕 Small Domestic Pet (Dog / Cat)</option>
+            </select>
           </div>
 
-          <!-- Card 2: Bicycles Policy -->
-          <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-            <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold mb-2.5 text-sm">
-              🚲
-            </div>
-            <h4 class="text-xs font-bold text-slate-900 mb-1">Bicycle &amp; Foldable Cycles</h4>
-            <div class="space-y-1.5 text-xs text-slate-600">
-              <div class="p-2 bg-white rounded-lg border border-slate-200 mb-2">
-                <span class="text-emerald-800 font-bold block text-[11px]">Permitted Compartment:</span>
-                <span class="text-[11px]">Luggage / Vendor compartment only</span>
-              </div>
-              <div class="text-[11px] leading-relaxed">
-                <strong>Non-Peak Timings:</strong> 11:00 AM to 04:30 PM &amp; 10:00 PM to 06:00 AM with booked luggage ticket (approx ₹25-₹60 depending on distance).
-              </div>
-              <div class="text-[11px] text-rose-700 font-semibold mt-1">
-                Strictly prohibited in passenger coaches during morning &amp; evening peak hours.
-              </div>
-            </div>
-          </div>
-
-          <!-- Card 3: Penalties -->
-          <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-            <div class="w-8 h-8 rounded-lg bg-rose-100 text-rose-800 flex items-center justify-center font-bold mb-2.5 text-sm">
-              ⚠️
-            </div>
-            <h4 class="text-xs font-bold text-slate-900 mb-1">Unbooked Luggage Penalties</h4>
-            <div class="space-y-1.5 text-xs text-slate-600">
-              <p class="text-[11px] leading-relaxed">
-                Carrying excess unbooked baggage beyond marginal allowance incurs a <strong>6x normal luggage tariff fine</strong> under Section 137/138 of Railways Act.
-              </p>
-              <div class="p-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-900 text-[11px]">
-                <strong>Strictly Prohibited:</strong> Gas cylinders, kerosene, fireworks, acids, unsealed inflammable liquids. Up to 3 years imprisonment under Section 164.
-              </div>
-            </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Travel Distance Slabs:</label>
+            <select id="luggageDistSelect" onchange="calculateLuggageTariff()" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs">
+              <option value="SHORT">Short Distance (1 – 20 km)</option>
+              <option value="MEDIUM" selected>Medium Distance (21 – 50 km)</option>
+              <option value="LONG">Long Distance (51 – 120 km)</option>
+            </select>
           </div>
         </div>
 
-        <!-- Small Pets Guide -->
-        <div class="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl text-xs text-emerald-950 flex items-start gap-3">
-          <span class="text-xl">🐕</span>
-          <div>
-            <strong class="font-bold text-emerald-900">Pet Travel Policy on Suburban Trains:</strong>
-            <p class="text-xs text-emerald-800 mt-0.5 leading-relaxed">
-              Small domestic pets (dogs/cats) are only permitted in First Class Coupe with prior booking at the station Parcel Office and a valid veterinary fitness certificate. Pets are strictly not permitted in General Second Class or AC local trains.
-            </p>
+        <!-- Weight Slider -->
+        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-800 mb-2">
+            <span>Approximate Weight:</span>
+            <span id="luggageWeightDisplay" class="text-sm font-black text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-lg">15 kg</span>
           </div>
+          <input 
+            type="range" 
+            id="luggageWeightSlider" 
+            min="1" 
+            max="60" 
+            value="15" 
+            class="w-full accent-emerald-700 cursor-pointer"
+            oninput="document.getElementById('luggageWeightDisplay').textContent = this.value + ' kg'; calculateLuggageTariff();"
+          />
+          <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+            <span>1 kg</span>
+            <span>35 kg (Free Quota II)</span>
+            <span>40 kg (Free Quota I)</span>
+            <span>60 kg (Max)</span>
+          </div>
+        </div>
+
+        <!-- Dynamic Calculation Result Box -->
+        <div id="luggageResultCard" class="space-y-3">
+          <!-- Populated by calculateLuggageTariff() -->
         </div>
       </div>
 
-      <!-- SUBTAB 3: UTS MOBILE TICKETING GUIDE -->
+      <!-- TOOL 5: UTS MOBILE R-WALLET 3% CASHBACK & GEOFENCE CHECKER -->
       <div id="subtab-uts" class="commuter-panel hidden bg-white border border-slate-200 rounded-3xl p-6 shadow-xs max-w-4xl mx-auto space-y-6">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
           <div>
-            <h3 class="text-base font-bold text-slate-900">UTS on Mobile Ticketing Guide &amp; Geofencing Rules</h3>
-            <p class="text-xs text-slate-500 mt-0.5">Indian Railways official guidelines for paperless ticketing, GPS boundaries, and season pass renewal.</p>
+            <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+              <span>UTS Mobile R-Wallet 3% Bonus &amp; GPS Geofence Validator</span>
+              <span class="text-[10px] font-black bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md uppercase">3% Bonus</span>
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">Calculate instant R-Wallet cashback bonus and verify if your location is within the 20 km UTS booking geofence.</p>
           </div>
           <span class="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-            CR Official Commuter Advisory
+            CR Official Commuter Utility
           </span>
         </div>
 
-        <!-- 4 Key Principles Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <!-- 1: Geofencing Radius -->
-          <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-            <div class="flex items-center gap-2 mb-2">
-              <span class="w-6 h-6 rounded-md bg-blue-100 text-blue-800 flex items-center justify-center font-black text-xs">1</span>
-              <h4 class="text-xs font-bold text-slate-900">GPS Geofencing Inner &amp; Outer Limits</h4>
-            </div>
-            <ul class="text-xs text-slate-600 space-y-1.5 list-disc pl-4 leading-relaxed">
-              <li><strong>Outer Range:</strong> You can book paperless tickets from up to <strong>20 km</strong> away from the boarding station (home or office).</li>
-              <li><strong>Inner Safety Zone:</strong> Booking is <em>blocked within 20-30 meters</em> of railway tracks and platforms to stop hazardous last-minute boarding.</li>
-              <li>Always book your ticket before reaching the station foot overbridge.</li>
-            </ul>
+        <!-- Part A: R-Wallet 3% Instant Cashback Calculator -->
+        <div class="p-5 bg-gradient-to-br from-emerald-50/70 to-teal-50/40 rounded-2xl border border-emerald-200 space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-black text-emerald-950 uppercase tracking-wide flex items-center gap-1.5">
+              <span>💰</span>
+              <span>Railway R-Wallet 3% Instant Cashback Calculator</span>
+            </h4>
+            <span class="text-[10px] font-extrabold text-emerald-800 bg-white px-2 py-0.5 rounded border border-emerald-200">0% Gateway Fee</span>
           </div>
 
-          <!-- 2: Paperless vs Paper Ticket -->
-          <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-            <div class="flex items-center gap-2 mb-2">
-              <span class="w-6 h-6 rounded-md bg-emerald-100 text-emerald-800 flex items-center justify-center font-black text-xs">2</span>
-              <h4 class="text-xs font-bold text-slate-900">Paperless vs Paper Ticket Mode</h4>
+          <div class="space-y-2">
+            <label class="block text-xs font-bold text-slate-700">Select or Enter Recharge Amount (₹):</label>
+            <div class="flex flex-wrap items-center gap-2">
+              <button type="button" onclick="setRWalletAmount(200)" class="px-3 py-1.5 bg-white border border-slate-200 hover:border-emerald-500 rounded-xl text-xs font-extrabold text-slate-800 shadow-2xs">₹200</button>
+              <button type="button" onclick="setRWalletAmount(500)" class="px-3 py-1.5 bg-white border border-slate-200 hover:border-emerald-500 rounded-xl text-xs font-extrabold text-slate-800 shadow-2xs">₹500</button>
+              <button type="button" onclick="setRWalletAmount(1000)" class="px-3 py-1.5 bg-white border-2 border-emerald-600 rounded-xl text-xs font-black text-emerald-900 shadow-2xs">₹1,000</button>
+              <button type="button" onclick="setRWalletAmount(2000)" class="px-3 py-1.5 bg-white border border-slate-200 hover:border-emerald-500 rounded-xl text-xs font-extrabold text-slate-800 shadow-2xs">₹2,000</button>
+              <input 
+                type="number" 
+                id="rWalletCustomInput" 
+                value="1000" 
+                min="100" 
+                max="10000" 
+                step="50"
+                oninput="calculateRWalletBonus(this.value)"
+                class="w-28 p-1.5 bg-white border border-slate-200 rounded-xl text-xs font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
             </div>
-            <ul class="text-xs text-slate-600 space-y-1.5 list-disc pl-4 leading-relaxed">
-              <li><strong>Paperless Mode:</strong> Stored on phone with animated security hologram. Screenshots are strictly invalid for checking. Ensure device has battery.</li>
-              <li><strong>Paper Mode:</strong> If GPS is disabled or you prefer physical tickets, select Paper mode and print ticket at ATVM / CoTVM kiosks with the booking ID.</li>
-            </ul>
           </div>
 
-          <!-- 3: R-Wallet 3% Bonus -->
-          <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-            <div class="flex items-center gap-2 mb-2">
-              <span class="w-6 h-6 rounded-md bg-amber-100 text-amber-800 flex items-center justify-center font-black text-xs">3</span>
-              <h4 class="text-xs font-bold text-slate-900">Railway R-Wallet 3% Instant Cashback</h4>
-            </div>
-            <ul class="text-xs text-slate-600 space-y-1.5 list-disc pl-4 leading-relaxed">
-              <li>Recharging your UTS Railway Wallet (R-Wallet) gives an instant <strong>3% bonus</strong> credit.</li>
-              <li>Recharge ₹1,000 to get ₹1,030 balance immediately. Zero payment gateway convenience fees.</li>
-              <li>Recharge via UPI, Debit Card, or NetBanking within the UTS app.</li>
-            </ul>
-          </div>
-
-          <!-- 4: Advance Season Pass Renewal -->
-          <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-            <div class="flex items-center gap-2 mb-2">
-              <span class="w-6 h-6 rounded-md bg-purple-100 text-purple-800 flex items-center justify-center font-black text-xs">4</span>
-              <h4 class="text-xs font-bold text-slate-900">Advance Suburban Pass Renewal (10 Days)</h4>
-            </div>
-            <ul class="text-xs text-slate-600 space-y-1.5 list-disc pl-4 leading-relaxed">
-              <li>You can renew your Monthly or Quarterly Suburban Season Pass <strong>up to 10 days in advance</strong> before current pass expiry.</li>
-              <li>New validity starts automatically from the day after old pass expires. Avoids month-end booking queues.</li>
-              <li>Valid for all classes: II Class, I Class, and AC Suburban.</li>
-            </ul>
+          <!-- Live Output Card -->
+          <div id="rWalletCalculationDisplay" class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 text-center text-xs">
+            <!-- Populated by calculateRWalletBonus() -->
           </div>
         </div>
 
-        <div class="p-3.5 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-700 flex items-center justify-between">
-          <span>Single journey suburban tickets expire <strong>1 hour</strong> after booking if train has departed.</span>
-          <span class="text-[10px] font-bold text-emerald-800 bg-white px-2 py-0.5 rounded border border-slate-200">1 HOUR VALIDITY</span>
-        </div>
-      </div>
-
-      <!-- SUBTAB 2: PEAK RUSH & COACH STRATEGY -->
-      <div id="subtab-crowd" class="commuter-panel hidden bg-white border border-slate-200 rounded-3xl p-6 shadow-xs max-w-4xl mx-auto space-y-6">
-        <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
-          <div>
-            <h3 class="text-base font-bold text-slate-900">Peak Rush Hour Tactics &amp; Coach Layout Strategy</h3>
-            <p class="text-xs text-slate-500 mt-0.5">Authentic Mumbai Local rush patterns, 12-Car/15-Car rake composition, and safe boarding etiquette.</p>
-          </div>
-          <span class="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
-            Commuter Survival Wisdom
-          </span>
-        </div>
-
-        <!-- Rush Hour Direction Matrix -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Morning Peak -->
-          <div class="p-4 bg-gradient-to-br from-amber-50/60 to-orange-50/40 border border-amber-200 rounded-2xl">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-black text-amber-900 flex items-center gap-1.5">
-                <span>🌅</span>
-                <span>Morning Peak: 08:00 AM – 11:30 AM</span>
-              </span>
-              <span class="text-[9px] font-extrabold bg-amber-200/70 text-amber-900 px-2 py-0.5 rounded uppercase">UP Line (Towards CSMT)</span>
-            </div>
-            <p class="text-xs text-slate-600 leading-relaxed mb-3">
-              Heavy passenger influx starts from Kasara, Karjat, Kalyan, Dombivli, and Thane heading towards Dadar, Byculla, and CSMT business districts.
-            </p>
-            <div class="space-y-1.5 text-xs text-slate-700 bg-white/70 p-2.5 rounded-xl border border-amber-100">
-              <div class="flex justify-between"><strong>High Density Halts:</strong> <span>Dombivli, Thane, Ghatkopar, Kurla</span></div>
-              <div class="flex justify-between"><strong>Strategy:</strong> <span>Board originating trains at Kalyan/Thane for seats</span></div>
-            </div>
-          </div>
-
-          <!-- Evening Peak -->
-          <div class="p-4 bg-gradient-to-br from-indigo-50/60 to-blue-50/40 border border-indigo-200 rounded-2xl">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-black text-indigo-900 flex items-center gap-1.5">
-                <span>🌇</span>
-                <span>Evening Peak: 05:30 PM – 09:00 PM</span>
-              </span>
-              <span class="text-[9px] font-extrabold bg-indigo-200/70 text-indigo-900 px-2 py-0.5 rounded uppercase">DOWN Line (Towards Kalyan)</span>
-            </div>
-            <p class="text-xs text-slate-600 leading-relaxed mb-3">
-              Massive return flow from South Mumbai and Lower Parel/Dadar heading back north towards Thane, Dombivli, Kalyan, Titwala, Ambernath, and Badlapur.
-            </p>
-            <div class="space-y-1.5 text-xs text-slate-700 bg-white/70 p-2.5 rounded-xl border border-indigo-100">
-              <div class="flex justify-between"><strong>High Density Halts:</strong> <span>CSMT, Byculla, Dadar, Kurla, Ghatkopar</span></div>
-              <div class="flex justify-between"><strong>Strategy:</strong> <span>Avoid crossing Dadar FOBs between 18:00 and 19:30</span></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 12-Car EMU Typical Coach Composition & Density -->
-        <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+        <!-- Part B: Interactive GPS Geofence Range Checker -->
+        <div class="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
           <div class="flex items-center justify-between">
             <h4 class="text-xs font-black text-slate-900 uppercase tracking-wide flex items-center gap-1.5">
-              <span>🚃</span>
-              <span>12-Car EMU Coach Composition &amp; Platform Positioning</span>
+              <span>📍</span>
+              <span>UTS GPS Geofence Range Validator (20 km Boundary vs 30m Track Zone)</span>
             </h4>
-            <span class="text-[10px] text-slate-500 font-semibold">CSMT (South) ➔ Kalyan (North)</span>
+            <span class="text-[10px] text-slate-500 font-semibold">Indian Railways Safety Geofence</span>
           </div>
 
-          <!-- Visual coach layout -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2 text-center text-xs">
-            <div class="p-2 bg-white rounded-xl border border-slate-200 shadow-2xs">
-              <span class="text-[9px] text-slate-400 block font-bold">Coach 1</span>
-              <strong class="text-slate-900 block text-xs">Ladies / Motorman</strong>
-              <span class="text-[9px] text-purple-700 font-semibold block mt-0.5">Front Ladies</span>
-            </div>
-            <div class="p-2 bg-white rounded-xl border border-slate-200 shadow-2xs">
-              <span class="text-[9px] text-slate-400 block font-bold">Coach 2-3</span>
-              <strong class="text-slate-900 block text-xs">II Class &amp; Vendor</strong>
-              <span class="text-[9px] text-amber-700 font-semibold block mt-0.5">Dabbawalas / Luggage</span>
-            </div>
-            <div class="p-2 bg-white rounded-xl border border-slate-200 shadow-2xs">
-              <span class="text-[9px] text-slate-400 block font-bold">Coach 4</span>
-              <strong class="text-slate-900 block text-xs">First Class</strong>
-              <span class="text-[9px] text-amber-800 font-semibold block mt-0.5">Cushioned Seats</span>
-            </div>
-            <div class="p-2 bg-white rounded-xl border border-slate-200 shadow-2xs">
-              <span class="text-[9px] text-slate-400 block font-bold">Coach 5-7</span>
-              <strong class="text-slate-900 block text-xs">General II / Ladies</strong>
-              <span class="text-[9px] text-rose-700 font-semibold block mt-0.5">Max Crowd (Mid FOB)</span>
-            </div>
-            <div class="p-2 bg-white rounded-xl border border-slate-200 shadow-2xs">
-              <span class="text-[9px] text-slate-400 block font-bold">Coach 8-10</span>
-              <strong class="text-slate-900 block text-xs">General II Class</strong>
-              <span class="text-[9px] text-slate-600 font-semibold block mt-0.5">High SDCL Crush</span>
-            </div>
-            <div class="p-2 bg-white rounded-xl border border-slate-200 shadow-2xs">
-              <span class="text-[9px] text-slate-400 block font-bold">Coach 11-12</span>
-              <strong class="text-slate-900 block text-xs">Rear Ladies &amp; Guard</strong>
-              <span class="text-[9px] text-purple-700 font-semibold block mt-0.5">Rear Ladies</span>
-            </div>
-          </div>
-          <p class="text-[11px] text-slate-500 leading-relaxed">
-            <strong>Pro Tip:</strong> End coaches (Coach 1 and Coach 12) typically have less crowd density compared to central coaches (Coach 5-7) which align directly with major station foot-over-bridges (FOBs).
-          </p>
-        </div>
-
-        <!-- Super-Dense Crush Load (SDCL) Commuter Principles -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-          <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl">
-            <div class="font-black text-slate-900 mb-1 flex items-center gap-1.5">
-              <span>🎒</span>
-              <span>Front Bag Discipline</span>
-            </div>
-            <p class="text-slate-600 leading-relaxed">
-              Always turn backpacks around to your chest before entering the coach. This prevents snagging doors, protects valuables, and gives you breathing space.
-            </p>
-          </div>
-
-          <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl">
-            <div class="font-black text-slate-900 mb-1 flex items-center gap-1.5">
-              <span>🚪</span>
-              <span>Center Pole Etiquette</span>
-            </div>
-            <p class="text-slate-600 leading-relaxed">
-              Never cling to the center doorway pole if you are traveling more than 2 halts. Move inward to the aisle ("Pudhe chala") to let alightees exit smoothly.
-            </p>
-          </div>
-
-          <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl">
-            <div class="font-black text-slate-900 mb-1 flex items-center gap-1.5">
-              <span>❄️</span>
-              <span>AC Local Dwell Time</span>
-            </div>
-            <p class="text-slate-600 leading-relaxed">
-              AC EMU automated doors close strictly 15-20 seconds before departure. Never obstruct door closing tracks as sensors will lock brakes and trigger alarms.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- SUBTAB 3: MONSOON & FLOOD TRANSIT GUIDE (RAIN SAATHI) -->
-      <div id="subtab-monsoon" class="commuter-panel hidden bg-white border border-slate-200 rounded-3xl p-6 shadow-xs max-w-4xl mx-auto space-y-6">
-        <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
-          <div>
-            <h3 class="text-base font-bold text-slate-900">Monsoon &amp; Flood Transit Guide (Rain Saathi)</h3>
-            <p class="text-xs text-slate-500 mt-0.5">Central Railway waterlogging flashpoints, track submersion thresholds, pumping operations &amp; storm rules.</p>
-          </div>
-          <span class="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-sky-50 text-sky-800 border border-sky-200">
-            Monsoon Readiness Manual
-          </span>
-        </div>
-
-        <!-- 4 Key Flood Flashpoints on Central Railway -->
-        <div>
-          <h4 class="text-xs font-black text-slate-900 uppercase tracking-wide mb-3 flex items-center gap-1.5">
-            <span>⛈️</span>
-            <span>Critical Low-Lying Track Sections (High Waterlogging Risk)</span>
-          </h4>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            <!-- Sion - Kurla -->
-            <div class="p-3.5 bg-sky-50/50 border border-sky-200 rounded-2xl">
-              <div class="flex items-center justify-between">
-                <strong class="font-extrabold text-slate-900">Sion – Kurla Dip (Km 13-15)</strong>
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-800">Mithi River Basin</span>
-              </div>
-              <p class="text-slate-600 mt-1 leading-relaxed text-[11px]">
-                Tracks dip 1.2m below road grade adjacent to the Mithi River. High tides above 4.5m coupled with &gt;50mm/hr rain cause water ingress. 24 high-capacity pumps stationed.
-              </p>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Select Station:</label>
+              <select id="utsGeofenceStationSelect" onchange="checkUtsGeofence()" class="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"></select>
             </div>
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="font-bold text-slate-700">Distance From Station:</label>
+                <span id="utsDistanceSliderDisplay" class="font-black text-emerald-800 bg-emerald-100 px-2 py-0.2 rounded text-[11px]">2.5 km</span>
+              </div>
+              <input 
+                type="range" 
+                id="utsDistanceSlider" 
+                min="0" 
+                max="25" 
+                step="0.1" 
+                value="2.5" 
+                class="w-full accent-emerald-700 cursor-pointer"
+                oninput="document.getElementById('utsDistanceSliderDisplay').textContent = this.value + ' km'; checkUtsGeofence();"
+              />
+            </div>
+          </div>
 
-            <!-- Chunabhatti / GTB Nagar -->
-            <div class="p-3.5 bg-sky-50/50 border border-sky-200 rounded-2xl">
-              <div class="flex items-center justify-between">
-                <strong class="font-extrabold text-slate-900">Chunabhatti &amp; Tilak Nagar</strong>
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800">Harbour / Chord</span>
-              </div>
-              <p class="text-slate-600 mt-1 leading-relaxed text-[11px]">
-                Culvert bottle-necks near Kurla car shed. Trains operate under slow caution (15 km/h) if water touches rail base.
-              </p>
-            </div>
-
-            <!-- Vidyavihar & Bhandup -->
-            <div class="p-3.5 bg-sky-50/50 border border-sky-200 rounded-2xl">
-              <div class="flex items-center justify-between">
-                <strong class="font-extrabold text-slate-900">Vidyavihar &amp; Kanjurmarg Dips</strong>
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-800">Slow Line Tracks</span>
-              </div>
-              <p class="text-slate-600 mt-1 leading-relaxed text-[11px]">
-                Fast corridor remains elevated; Slow corridor tracks experience slow water drainage during intense cloudbursts.
-              </p>
-            </div>
-
-            <!-- Kalwa - Mumbra -->
-            <div class="p-3.5 bg-sky-50/50 border border-sky-200 rounded-2xl">
-              <div class="flex items-center justify-between">
-                <strong class="font-extrabold text-slate-900">Kalwa – Mumbra Creek Alignment</strong>
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-sky-200 text-sky-900">Tidal Backwater</span>
-              </div>
-              <p class="text-slate-600 mt-1 leading-relaxed text-[11px]">
-                Thane Creek tidal surges can slow speed of local rakes. Anti-flood micro-tunnels and boulder bunds protect rails.
-              </p>
-            </div>
+          <!-- Dynamic Geofence Result Badge -->
+          <div id="utsGeofenceResultBox" class="p-3 bg-white rounded-xl border border-slate-200 text-xs">
+            <!-- Populated by checkUtsGeofence() -->
           </div>
         </div>
 
-        <!-- Official Rail Water Clearance Thresholds -->
-        <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
-          <div class="flex items-center justify-between">
-            <h4 class="text-xs font-black text-slate-900 uppercase tracking-wide flex items-center gap-1.5">
-              <span>📏</span>
-              <span>Railway Water-Level Safety Thresholds (Safety Operating Protocol)</span>
-            </h4>
-            <span class="text-[10px] font-bold bg-slate-200 text-slate-800 px-2 py-0.5 rounded">Indian Railways Operating Code</span>
+        <!-- Part C: Advance Season Pass Renewal 10-Day Calculator -->
+        <div class="p-4 bg-slate-100/70 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div>
+            <strong class="text-slate-900 font-bold block">Advance Suburban Season Pass Renewal:</strong>
+            <span class="text-slate-500 text-[11px]">You can renew your Monthly/Quarterly pass up to 10 days before expiry without losing validity days.</span>
           </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs text-center">
-            <div class="p-3 bg-white rounded-xl border border-emerald-200 shadow-2xs">
-              <div class="text-[10px] font-bold text-emerald-700 uppercase">Under 75 mm</div>
-              <div class="text-base font-black text-slate-900 mt-1">Normal Operation</div>
-              <p class="text-[10px] text-slate-500 mt-0.5">Water below rail head; services run at regular timetable speeds.</p>
-            </div>
-
-            <div class="p-3 bg-white rounded-xl border border-amber-200 shadow-2xs">
-              <div class="text-[10px] font-bold text-amber-700 uppercase">75 mm – 150 mm</div>
-              <div class="text-base font-black text-amber-900 mt-1">Caution Speed (15 km/h)</div>
-              <p class="text-[10px] text-slate-500 mt-0.5">Motorman pilots at crawling speed to prevent water splash into undercarriage traction motors.</p>
-            </div>
-
-            <div class="p-3 bg-white rounded-xl border border-rose-200 shadow-2xs">
-              <div class="text-[10px] font-bold text-rose-700 uppercase">Above 150 mm</div>
-              <div class="text-base font-black text-rose-900 mt-1">Power Cut &amp; Suspension</div>
-              <p class="text-[10px] text-slate-500 mt-0.5">Overhead 25kV traction automatically switched off to prevent short circuits and electrocution hazards.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Essential Commuter Storm Safety Dos and Don'ts -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-          <div class="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl">
-            <h5 class="font-bold text-emerald-950 mb-1.5 flex items-center gap-1.5">
-              <span>✅</span>
-              <span>Recommended Monsoon Commuter Actions</span>
-            </h5>
-            <ul class="text-emerald-900 space-y-1.5 list-disc pl-4 text-[11px] leading-relaxed">
-              <li>Check CentralSaathi delay telemetry before leaving home during red alerts.</li>
-              <li>Stay inside the rake if a train halts between stations. The coaches offer safe insulation against 25kV traction.</li>
-              <li>Listen attentively to the Motorman/Guard public address announcements for track clearance updates.</li>
-            </ul>
-          </div>
-
-          <div class="p-4 bg-rose-50/70 border border-rose-200 rounded-2xl">
-            <h5 class="font-bold text-rose-950 mb-1.5 flex items-center gap-1.5">
-              <span>⛔</span>
-              <span>Strictly Prohibited Monsoon Hazards</span>
-            </h5>
-            <ul class="text-rose-900 space-y-1.5 list-disc pl-4 text-[11px] leading-relaxed">
-              <li><strong>Never jump onto waterlogged tracks:</strong> High risk of hidden open manholes, muck slips, and 3rd-rail electric leaks.</li>
-              <li><strong>Do not pull the emergency alarm chain:</strong> Pulling the chain freezes brakes and traps following trains in flooded sectors.</li>
-              <li>Do not touch metallic track signaling posts or overhead wire mast foundations in deep water.</li>
-            </ul>
+          <div class="flex items-center gap-2">
+            <input 
+              type="date" 
+              id="passExpiryInput" 
+              class="p-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800"
+              onchange="calculateAdvanceRenewalDate(this.value)"
+            />
+            <span id="advanceRenewalResultBadge" class="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200">
+              Pick expiry date
+            </span>
           </div>
         </div>
       </div>
 
-      <!-- SUBTAB 5: PASSENGER CHARTER & COMMUTER RIGHTS -->
-      <div id="subtab-charter" class="commuter-panel hidden bg-white border border-slate-200 rounded-3xl p-6 shadow-xs max-w-4xl mx-auto space-y-6">
+      <!-- TOOL 6: AC LOCAL FARE DIFFERENCE, PENALTY CALCULATOR & MEDICAL CLINIC FINDER -->
+      <div id="subtab-fines" class="commuter-panel hidden bg-white border border-slate-200 rounded-3xl p-6 shadow-xs max-w-4xl mx-auto space-y-6">
         <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
           <div>
-            <h3 class="text-base font-bold text-slate-900">Passenger Charter &amp; Commuter Rights</h3>
-            <p class="text-xs text-slate-500 mt-0.5">Know your legal rights during mega blocks, AC local cancellations, delay refunds, and accidental coverage.</p>
+            <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+              <span>AC Local Penalty &amp; Emergency Medical Clinic Finder</span>
+              <span class="text-[10px] font-black bg-rose-100 text-rose-800 px-2 py-0.5 rounded-md uppercase">Railway Rules</span>
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">Calculate fines for travelling in AC Local with First Class pass, check Section 138 rules, and find Emergency Medical Rooms (One Rupee Clinics).</p>
           </div>
-          <span class="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-slate-100 text-slate-800 border border-slate-200">
-            Citizen Charter
+          <span class="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-rose-50 text-rose-800 border border-rose-200">
+            Emergency &amp; Legal Assistance
           </span>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-          <!-- Block extension -->
-          <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-            <h4 class="font-bold text-slate-900 mb-1.5 flex items-center gap-1.5">
-              <span>🔄</span>
-              <span>Mega Block Travel Permissibility</span>
+        <!-- AC Local Penalty Calculator -->
+        <div class="p-5 bg-gradient-to-br from-rose-50/70 to-amber-50/40 rounded-2xl border border-rose-200 space-y-4">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-black text-rose-950 uppercase tracking-wide flex items-center gap-1.5">
+              <span>⚖️</span>
+              <span>AC Local &amp; Ticketless Fine Calculator (Section 138)</span>
             </h4>
-            <p class="text-slate-600 leading-relaxed">
-              When Central Railway announces major traffic/power blocks or waterlogging disruptions, valid suburban season ticket holders are legally permitted to travel via alternative suburban routes (e.g. via Harbour line or Trans-Harbour line) without paying extra fare.
-            </p>
+            <span class="text-[10px] font-extrabold text-rose-700 bg-white px-2 py-0.5 rounded border border-rose-200">Official CR Penalties</span>
           </div>
 
-          <!-- AC Local Refund Rules -->
-          <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-            <h4 class="font-bold text-slate-900 mb-1.5 flex items-center gap-1.5">
-              <span>❄️</span>
-              <span>AC Local Substitution &amp; Refund</span>
-            </h4>
-            <p class="text-slate-600 leading-relaxed">
-              If a scheduled AC suburban service is replaced by a regular non-AC local rake or cancelled, AC pass holders can travel in First Class coaches. Single ticket holders can claim a 100% fare refund at station booking counters within 3 hours.
-            </p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Ticket / Pass Held by Commuter:</label>
+              <select id="acFineTicketTypeSelect" onchange="calculateAcFineDifference()" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500">
+                <option value="FIRST_CLASS_PASS" selected>🎫 First Class Season Pass</option>
+                <option value="FIRST_CLASS_SINGLE">🎫 First Class Single Ticket</option>
+                <option value="SECOND_CLASS_PASS">🎟️ Second Class Pass / Ticket</option>
+                <option value="NO_TICKET">❌ No Ticket (Ticketless)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Boarding From:</label>
+              <select id="acFineFromSelect" onchange="calculateAcFineDifference()" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500"></select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Deboarding At:</label>
+              <select id="acFineToSelect" onchange="calculateAcFineDifference()" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500"></select>
+            </div>
           </div>
 
-          <!-- Concession Entitlements -->
-          <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-            <h4 class="font-bold text-slate-900 mb-1.5 flex items-center gap-1.5">
-              <span>🎟️</span>
-              <span>Statutory Concessions</span>
-            </h4>
-            <ul class="text-slate-600 space-y-1 list-disc pl-4 leading-relaxed">
-              <li><strong>Students:</strong> 50% discount on suburban season tickets (Free passes for girls up to Std 12).</li>
-              <li><strong>Divyangjan / Patients:</strong> Up to 75% concession with verified railway certificate.</li>
-              <li><strong>Senior Citizens:</strong> Reserved priority seating in all II &amp; I class compartments.</li>
-            </ul>
-          </div>
+          <!-- Dynamic Penalty Output -->
+          <div id="acFineResultCard" class="space-y-3"></div>
+        </div>
 
-          <!-- Golden Hour Medical Rights -->
-          <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-            <h4 class="font-bold text-slate-900 mb-1.5 flex items-center gap-1.5">
+        <!-- Emergency Medical Rooms (One Rupee Clinics) & Golden Hour Care -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-black text-slate-900 uppercase tracking-wide flex items-center gap-1.5">
               <span>🏥</span>
-              <span>Golden Hour Accident Treatment</span>
+              <span>Central Railway Emergency Medical Rooms (One Rupee Clinics)</span>
             </h4>
-            <p class="text-slate-600 leading-relaxed">
-              Railways are bound by Supreme Court guidelines to provide immediate free first aid at Station Master Emergency Medical Rooms (One Rupee Clinics) and arrange instant free ambulance transit (Dial 108) to the nearest municipal hospital.
-            </p>
+            <span class="text-[10px] text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">24/7 Paramedics On Duty</span>
+          </div>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+              <div class="font-extrabold text-slate-900 flex items-center justify-between">
+                <span>Dadar (DR)</span>
+                <span class="text-[10px] px-1.5 py-0.2 bg-emerald-100 text-emerald-800 rounded font-bold">PF 6</span>
+              </div>
+              <p class="text-slate-500 text-[11px] mt-1">Near Central exit concourse. Equipped with ECG, oxygen &amp; immediate trauma stabilization.</p>
+              <div class="mt-2 text-[10px] font-bold text-emerald-700">Helpline: 139 / 022-24114836</div>
+            </div>
+
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+              <div class="font-extrabold text-slate-900 flex items-center justify-between">
+                <span>Kurla (CLA)</span>
+                <span class="text-[10px] px-1.5 py-0.2 bg-emerald-100 text-emerald-800 rounded font-bold">PF 1</span>
+              </div>
+              <p class="text-slate-500 text-[11px] mt-1">Near Kalyan-end bridge. Free immediate first-aid &amp; ambulance transfer to Bhabha Hospital.</p>
+              <div class="mt-2 text-[10px] font-bold text-emerald-700">Helpline: 139 / 1512 (GRP)</div>
+            </div>
+
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+              <div class="font-extrabold text-slate-900 flex items-center justify-between">
+                <span>Thane (TNA)</span>
+                <span class="text-[10px] px-1.5 py-0.2 bg-emerald-100 text-emerald-800 rounded font-bold">PF 2</span>
+              </div>
+              <p class="text-slate-500 text-[11px] mt-1">Platform 2 concourse. 24x7 doctor on call with stretcher and wheelchair assistance.</p>
+              <div class="mt-2 text-[10px] font-bold text-emerald-700">Helpline: 139 / 022-25332211</div>
+            </div>
+
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+              <div class="font-extrabold text-slate-900 flex items-center justify-between">
+                <span>Ghatkopar (GC)</span>
+                <span class="text-[10px] px-1.5 py-0.2 bg-emerald-100 text-emerald-800 rounded font-bold">PF 1 (West)</span>
+              </div>
+              <p class="text-slate-500 text-[11px] mt-1">Near Metro interchange connector. Emergency resuscitation &amp; cardiac support.</p>
+              <div class="mt-2 text-[10px] font-bold text-emerald-700">Helpline: 139 / 1512</div>
+            </div>
+
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+              <div class="font-extrabold text-slate-900 flex items-center justify-between">
+                <span>Kalyan (KYN)</span>
+                <span class="text-[10px] px-1.5 py-0.2 bg-emerald-100 text-emerald-800 rounded font-bold">PF 1</span>
+              </div>
+              <p class="text-slate-500 text-[11px] mt-1">Near Station Director office. Ambulance tie-up with Rukminibai Hospital.</p>
+              <div class="mt-2 text-[10px] font-bold text-emerald-700">Helpline: 139 / 0251-2315800</div>
+            </div>
+
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+              <div class="font-extrabold text-slate-900 flex items-center justify-between">
+                <span>CSMT Terminus</span>
+                <span class="text-[10px] px-1.5 py-0.2 bg-emerald-100 text-emerald-800 rounded font-bold">PF 1 / 18</span>
+              </div>
+              <p class="text-slate-500 text-[11px] mt-1">Main Suburban concourse &amp; Long Distance PF 18. Direct access to St. George Hospital.</p>
+              <div class="mt-2 text-[10px] font-bold text-emerald-700">Helpline: 139 / 022-22624555</div>
+            </div>
           </div>
         </div>
       </div>
@@ -2317,9 +2296,14 @@
               </select>
             </div>
 
-            <div class="pt-2">
-              <button id="armWakeAlarmBtn" class="w-full py-3 bg-[#064e3b] hover:bg-[#047857] text-white rounded-xl text-xs font-bold tracking-wide transition-colors shadow-sm">
-                ARM DESTINATION WAKE ALARM
+            <div class="pt-2 flex flex-col sm:flex-row gap-2">
+              <button id="armWakeAlarmBtn" class="flex-1 py-3 bg-[#064e3b] hover:bg-[#047857] text-white rounded-xl text-xs font-black tracking-wide transition-colors shadow-sm cursor-pointer flex items-center justify-center gap-1.5">
+                <span>🔔</span>
+                <span>ARM DESTINATION WAKE ALARM</span>
+              </button>
+              <button type="button" onclick="testAlarmForSelectedStation()" class="py-3 px-4 bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-300 rounded-xl text-xs font-extrabold transition-colors shadow-2xs cursor-pointer flex items-center justify-center gap-1.5">
+                <span>⚡</span>
+                <span>Test Alarm Right Now</span>
               </button>
             </div>
 
@@ -2688,15 +2672,16 @@
         <p class="text-[10px] text-slate-400">Alarm rings continuously until you stop it or 8 seconds elapse.</p>
       </div>
 
-      <!-- Action Button: Stop Alarm (Unless user stops it, will stop in 8s) -->
+      <!-- Action Button: Stop Alarm & Stop Tracking Automatically -->
       <button 
         id="dismissArrivalAlarmBtn" 
         onclick="stopStationArrivalAlarm()" 
         class="w-full py-4 px-6 bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 hover:from-rose-700 hover:to-red-800 active:from-rose-800 text-white font-black text-sm rounded-2xl shadow-xl shadow-rose-600/30 transform active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
       >
         <span class="text-base">🛑</span>
-        <span>STOP ALARM / I AM AWAKE</span>
+        <span>STOP ALARM &amp; STOP TRACKING</span>
       </button>
+      <p class="text-[10px] text-slate-400 mt-2">Silences alarm buzzer and automatically halts all active GPS &amp; journey tracking.</p>
 
     </div>
   </div>

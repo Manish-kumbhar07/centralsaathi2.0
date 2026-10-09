@@ -1,0 +1,204 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <!-- Outer Ring Gradient -->
+    <linearGradient id="csGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="30%" stop-color="#f59e0b"/>
+      <stop offset="70%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+
+    <!-- Emerald Railway Gradient -->
+    <linearGradient id="csEmeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="40%" stop-color="#059669"/>
+      <stop offset="80%" stop-color="#047857"/>
+      <stop offset="100%" stop-color="#064e3b"/>
+    </linearGradient>
+
+    <!-- Deep Midnight Core Gradient -->
+    <radialGradient id="csNightCore" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#142c47"/>
+      <stop offset="60%" stop-color="#0a1829"/>
+      <stop offset="100%" stop-color="#050e18"/>
+    </radialGradient>
+
+    <!-- Headlight Beam Flare -->
+    <radialGradient id="headlightGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fffbeb" stop-opacity="0.95"/>
+      <stop offset="40%" stop-color="#fde047" stop-opacity="0.6"/>
+      <stop offset="80%" stop-color="#f59e0b" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- EMU Body Gradient -->
+    <linearGradient id="emuBodyGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="25%" stop-color="#334155"/>
+      <stop offset="50%" stop-color="#475569"/>
+      <stop offset="75%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+
+    <!-- EMU Central Rail Livery Stripes -->
+    <linearGradient id="emuStripeYellow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#d97706"/>
+      <stop offset="50%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+
+    <linearGradient id="emuStripeMaroon" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#881337"/>
+      <stop offset="50%" stop-color="#be123c"/>
+      <stop offset="100%" stop-color="#881337"/>
+    </linearGradient>
+
+    <!-- Steel Rail Tracks Gradient -->
+    <linearGradient id="railSteel" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#64748b"/>
+      <stop offset="50%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#64748b"/>
+    </linearGradient>
+
+    <!-- Glow Drop Shadow Filter -->
+    <filter id="logoGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+
+    <filter id="shadowFilter" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Ambient Glow Backing -->
+  <circle cx="250" cy="250" r="235" fill="none" stroke="url(#csGoldGrad)" stroke-width="2" opacity="0.3" filter="url(#logoGlow)"/>
+
+  <!-- Outer Protective Railway Seal Ring -->
+  <circle cx="250" cy="250" r="230" fill="url(#csEmeraldGrad)" stroke="url(#csGoldGrad)" stroke-width="5" filter="url(#shadowFilter)"/>
+  
+  <!-- Outer Dotted Compass / Punctuality Ring -->
+  <circle cx="250" cy="250" r="216" fill="none" stroke="#fef08a" stroke-width="2" stroke-dasharray="4,6" opacity="0.8"/>
+
+  <!-- Inner Dark Blue / Midnight Field -->
+  <circle cx="250" cy="250" r="206" fill="url(#csNightCore)" stroke="url(#csGoldGrad)" stroke-width="3"/>
+
+  <!-- Concentric Radar / Railway Track Radii -->
+  <circle cx="250" cy="250" r="170" fill="none" stroke="#38bdf8" stroke-width="1" stroke-dasharray="2,8" opacity="0.25"/>
+  <circle cx="250" cy="250" r="130" fill="none" stroke="#34d399" stroke-width="1" stroke-dasharray="3,6" opacity="0.2"/>
+
+  <!-- PERSPECTIVE RAILWAY TRACKS (Converging from bottom to center) -->
+  <g id="tracks" opacity="0.95">
+    <!-- Sleepers (ties) -->
+    <path d="M 215 350 L 285 350" stroke="#475569" stroke-width="5" stroke-linecap="round"/>
+    <path d="M 195 380 L 305 380" stroke="#475569" stroke-width="6.5" stroke-linecap="round"/>
+    <path d="M 170 415 L 330 415" stroke="#334155" stroke-width="8" stroke-linecap="round"/>
+    <path d="M 140 455 L 360 455" stroke="#1e293b" stroke-width="9.5" stroke-linecap="round"/>
+
+    <!-- Left Rail -->
+    <polygon points="232,320 236,320 152,470 144,470" fill="url(#railSteel)"/>
+    <!-- Right Rail -->
+    <polygon points="268,320 264,320 348,470 356,470" fill="url(#railSteel)"/>
+    <!-- Inner Rail Gleam -->
+    <line x1="235" y1="320" x2="149" y2="470" stroke="#ffffff" stroke-width="1.5" opacity="0.8"/>
+    <line x1="265" y1="320" x2="351" y2="470" stroke="#ffffff" stroke-width="1.5" opacity="0.8"/>
+  </g>
+
+  <!-- ICONIC MUMBAI LOCAL TRAIN (EMU) CAB FRONT -->
+  <g id="mumbaiLocalEMU" filter="url(#shadowFilter)">
+    <!-- Roof Arc / Aerodynamic Crown -->
+    <path d="M 195 180 Q 250 162 305 180 L 315 220 L 185 220 Z" fill="url(#emuBodyGrad)"/>
+    
+    <!-- Overhead Pantograph / Electric Collector -->
+    <g stroke="url(#csGoldGrad)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="250" y1="164" x2="250" y2="148"/>
+      <path d="M 230 148 L 250 134 L 270 148"/>
+      <line x1="222" y1="134" x2="278" y2="134"/>
+      <!-- High Voltage Spark Star -->
+      <circle cx="250" cy="134" r="3" fill="#38bdf8"/>
+    </g>
+
+    <!-- Main Front Face Silhouette -->
+    <path d="M 182 215 C 182 205 195 200 250 200 C 305 200 318 205 318 215 L 322 300 C 322 315 310 325 295 328 L 205 328 C 190 325 178 315 178 300 Z" fill="url(#emuBodyGrad)" stroke="#0f172a" stroke-width="2"/>
+
+    <!-- Illuminated Route Destination Board (CSMT FAST) -->
+    <rect x="210" y="202" width="80" height="15" rx="3" fill="#020617" stroke="#fbbf24" stroke-width="1"/>
+    <text x="250" y="213" font-family="system-ui, -apple-system, sans-serif" font-size="8.5" font-weight="900" fill="#38bdf8" text-anchor="middle" letter-spacing="1.5">CSMT FAST</text>
+
+    <!-- Front Windshields (Twin Panoramic Glass) -->
+    <!-- Left Glass -->
+    <path d="M 192 225 L 244 225 L 244 260 L 194 258 Z" fill="#0284c7" opacity="0.85" stroke="#0f172a" stroke-width="2"/>
+    <path d="M 196 228 L 218 228 L 200 255 Z" fill="#ffffff" opacity="0.35"/> <!-- Windshield reflection -->
+    
+    <!-- Right Glass -->
+    <path d="M 256 225 L 308 225 L 306 258 L 256 260 Z" fill="#0284c7" opacity="0.85" stroke="#0f172a" stroke-width="2"/>
+    <path d="M 260 228 L 282 228 L 264 255 Z" fill="#ffffff" opacity="0.35"/>
+
+    <!-- Center Windshield Divider Post -->
+    <rect x="246" y="224" width="8" height="37" fill="#1e293b"/>
+
+    <!-- Central Railway Classic Maroon & Yellow Chevron Front Band -->
+    <!-- Maroon band -->
+    <path d="M 183 268 L 317 268 L 318 284 L 182 284 Z" fill="url(#emuStripeMaroon)"/>
+    <!-- Yellow dynamic V-chevron stripe -->
+    <polygon points="183,284 250,298 317,284 318,290 250,305 182,290" fill="url(#emuStripeYellow)"/>
+
+    <!-- Central Railway Logo Emblem on Train Nose -->
+    <circle cx="250" cy="276" r="6" fill="#fef08a" stroke="#b45309" stroke-width="1"/>
+    <circle cx="250" cy="276" r="3" fill="#be123c"/>
+
+    <!-- Lower Cowcatcher / Buffer Grille -->
+    <rect x="200" y="318" width="100" height="12" rx="3" fill="#0f172a"/>
+    <line x1="210" y1="324" x2="290" y2="324" stroke="#475569" stroke-width="2"/>
+    <circle cx="205" cy="324" r="4.5" fill="#334155" stroke="#64748b" stroke-width="1"/> <!-- Left buffer -->
+    <circle cx="295" cy="324" r="4.5" fill="#334155" stroke="#64748b" stroke-width="1"/> <!-- Right buffer -->
+
+    <!-- HIGH-BEAM DUAL HEADLIGHTS (Glowing) -->
+    <!-- Left Light Glow Flare -->
+    <circle cx="212" cy="302" r="18" fill="url(#headlightGlow)"/>
+    <circle cx="212" cy="302" r="6" fill="#ffffff" stroke="#f59e0b" stroke-width="2"/>
+    
+    <!-- Right Light Glow Flare -->
+    <circle cx="288" cy="302" r="18" fill="url(#headlightGlow)"/>
+    <circle cx="288" cy="302" r="6" fill="#ffffff" stroke="#f59e0b" stroke-width="2"/>
+  </g>
+
+  <!-- WINGS OF VELOCITY / CONNECTIVITY -->
+  <g stroke="url(#csGoldGrad)" stroke-width="2.5" fill="none" opacity="0.8">
+    <path d="M 170 240 Q 110 245 78 220" stroke-linecap="round"/>
+    <path d="M 166 255 Q 115 260 90 245" stroke-linecap="round"/>
+    <path d="M 330 240 Q 390 245 422 220" stroke-linecap="round"/>
+    <path d="M 334 255 Q 385 260 410 245" stroke-linecap="round"/>
+  </g>
+
+  <!-- EMBLEM TEXT ARCHES -->
+  <!-- Top Arch: CENTRAL SAATHI -->
+  <path id="topTextArc" d="M 85 250 A 165 165 0 0 1 415 250" fill="none"/>
+  <text fill="#ffffff" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="28" letter-spacing="4.5">
+    <textPath href="#topTextArc" startOffset="50%" text-anchor="middle">
+      CENTRAL SAATHI
+    </textPath>
+  </text>
+
+  <!-- Bottom Arch: MUMBAI SUBURBAN COMPANION -->
+  <path id="bottomTextArc" d="M 425 250 A 175 175 0 0 1 75 250" fill="none"/>
+  <text fill="#fde047" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="16.5" letter-spacing="3.2">
+    <textPath href="#bottomTextArc" startOffset="50%" text-anchor="middle">
+      ★ MUMBAI SUBURBAN COMPANION ★
+    </textPath>
+  </text>
+
+  <!-- SIDE STARS OF EXCELLENCE -->
+  <g fill="url(#csGoldGrad)">
+    <!-- Left Star -->
+    <path d="M 66 250 L 70 242 L 78 242 L 72 248 L 74 256 L 66 250 Z" transform="translate(0, -6)"/>
+    <!-- Right Star -->
+    <path d="M 434 250 L 438 242 L 446 242 L 440 248 L 442 256 L 434 250 Z" transform="translate(-10, -6)"/>
+  </g>
+
+  <!-- SUBTITLE SEAL: CENTRAL RAILWAY WTT 2026 -->
+  <rect x="175" y="448" width="150" height="22" rx="11" fill="#047857" stroke="url(#csGoldGrad)" stroke-width="1.5" filter="url(#shadowFilter)"/>
+  <text x="250" y="463" font-family="system-ui, -apple-system, sans-serif" font-size="10.5" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="1.2">
+    WTT 2026 VERIFIED
+  </text>
+</svg>

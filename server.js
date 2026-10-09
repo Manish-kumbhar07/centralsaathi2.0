@@ -22,8 +22,8 @@ app.use(express.static(__dirname));
 // Persistent Train Wallpaper Storage State (in-memory + disk cache)
 const HERO_CONFIG_FILE = path.join(__dirname, 'server', 'data', 'hero_image_config.json');
 let savedHeroWallpaper = {
-  url: '/assets/mumbai_railway_hero.svg',
-  name: 'Dusk EMU'
+  url: '',
+  name: 'Solid Midnight Railway'
 };
 
 // Try loading previously saved hero configuration from disk if exists
@@ -100,14 +100,10 @@ app.post('/api/save-hero-image', (req, res) => {
 
 app.get('/api/current-hero-image', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
-  const diskPath = path.join(__dirname, 'public', 'assets', 'saved_hero_image.png');
-  if (fs.existsSync(diskPath)) {
-    return res.json({ exists: true, url: '/assets/saved_hero_image.png', name: savedHeroWallpaper.name || 'Saved Train Photo' });
-  }
   if (savedHeroWallpaper && savedHeroWallpaper.url) {
     return res.json({ exists: true, url: savedHeroWallpaper.url, name: savedHeroWallpaper.name });
   }
-  return res.json({ exists: false, url: '/assets/mumbai_railway_hero.svg', name: 'Dusk EMU' });
+  return res.json({ exists: false, url: '', name: 'Solid Midnight Railway' });
 });
 
 // Load official timetable dataset with multi-path fallback for Vercel/Docker

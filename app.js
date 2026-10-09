@@ -249,6 +249,7 @@ window.showCommuterSubTab = function(subtabName) {
       b.classList.remove('hover:text-slate-900');
     } else {
       b.classList.remove('bg-white', 'text-slate-900', 'shadow-xs');
+      b.classList.add('hover:text-slate-900');
     }
   });
 
@@ -257,6 +258,14 @@ window.showCommuterSubTab = function(subtabName) {
   });
 
   document.getElementById(`subtab-${subtabName}`)?.classList.remove('hidden');
+
+  // Trigger immediate live calculation for the active tool
+  if (subtabName === 'fares') calculateCustomFares();
+  else if (subtabName === 'crowd') updateCoachCrowdSimulation();
+  else if (subtabName === 'doors') calculateDoorSideRoute();
+  else if (subtabName === 'luggage') calculateLuggageTariff();
+  else if (subtabName === 'uts') { checkUtsGeofence(); calculateRWalletBonus(1000); }
+  else if (subtabName === 'fines') calculateAcFineDifference();
 };
 
 window.quickPlanRoute = function(fromCode, toCode) {
@@ -293,6 +302,8 @@ async function loadStationsData() {
     ];
   }
 
+  // Populate Commuter Suite & Alarm Dropdowns NOW that allStations is guaranteed ready
+  populateToolDropdowns();
   renderDoorSideDirectory();
   renderAmenitiesDirectory();
 }
@@ -1282,7 +1293,7 @@ function stepTrainSimulationOnMap() {
   if (isWakeAlarmArmed && wakeAlarmTargetStation) {
     const distToTarget = calculateHaversineDistance(currentLat, currentLng, wakeAlarmTargetStation.lat, wakeAlarmTargetStation.lng);
     if (distToTarget <= wakeAlarmDistanceThreshold) {
-      triggerAlarmBuzzer();
+      triggerStationArrivalAlarm(wakeAlarmTargetStation, distToTarget, false);
       disarmWakeAlarm();
     }
   }
@@ -1832,21 +1843,34 @@ window.recenterRouteMap = function() {
 // LANDING PAGE HERO BACKGROUND CUSTOMIZATION
 // ==========================================
 const HERO_BG_PRESETS = {
-  dusk: {
-    url: '/assets/mumbai_railway_hero.svg',
-    name: 'Dusk EMU'
+  real_emu: {
+    url: '/assets/mumbai_local_emu_real.jpg',
+    name: 'Iconic EMU Local (Authentic Photo)'
   },
-  midnight: {
-    url: '/assets/bg_midnight_rail.svg',
-    name: 'Midnight Electric'
+  real_track: {
+    url: '/assets/mumbai_local_track_real.jpg',
+    name: 'Main Line Fast EMU (Authentic Photo)'
   },
-  monsoon: {
-    url: '/assets/bg_monsoon_ghat.svg',
-    name: 'Monsoon Ghat'
+  real_ac: {
+    url: '/assets/mumbai_ac_local_real.jpg',
+    name: 'AC Suburban Express (Authentic Photo)'
   },
   heritage: {
     url: '/assets/bg_heritage_vt.svg',
-    name: 'VT Heritage'
+    name: 'VT Heritage Dome'
+  },
+  // Backward compatibility aliases
+  dusk: {
+    url: '/assets/mumbai_local_emu_real.jpg',
+    name: 'Iconic EMU Local (Authentic Photo)'
+  },
+  midnight: {
+    url: '/assets/mumbai_local_track_real.jpg',
+    name: 'Main Line Fast EMU (Authentic Photo)'
+  },
+  monsoon: {
+    url: '/assets/mumbai_ac_local_real.jpg',
+    name: 'AC Suburban Express (Authentic Photo)'
   }
 };
 
@@ -1878,6 +1902,26 @@ window.selectPresetBg = function(presetKey) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ imagePath: preset.url, name: preset.name })
   }).catch(err => console.warn('Failed to save preset to server:', err));
+
+  toggleHeroBgModal(false);
+};
+
+window.applyHeroBgFromUrl = function() {
+  const input = document.getElementById('heroBgUrlInput');
+  if (!input || !input.value.trim()) return;
+  const url = input.value.trim();
+
+  applyHeroBg(url, 'Custom Web Image');
+  try {
+    localStorage.setItem('centralsaathi_hero_bg', url);
+    localStorage.setItem('centralsaathi_hero_bg_name', 'Custom Web Image');
+  } catch (e) {}
+
+  fetch('/api/save-hero-image', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ imagePath: url, name: 'Custom Web Image' })
+  }).catch(err => {});
 
   toggleHeroBgModal(false);
 };
@@ -1944,23 +1988,22 @@ window.handleHeroBgFileSelected = function(event) {
 window.resetHeroBgToDefault = function() {
   localStorage.removeItem('centralsaathi_hero_bg');
   localStorage.removeItem('centralsaathi_hero_bg_name');
-  applyHeroBg(HERO_BG_PRESETS.dusk.url, 'Dusk EMU');
+  applyHeroBg(HERO_BG_PRESETS.real_emu.url, 'Iconic EMU Local (Authentic Photo)');
   fetch('/api/save-hero-image', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ imagePath: HERO_BG_PRESETS.dusk.url, name: 'Dusk EMU' })
+    body: JSON.stringify({ imagePath: HERO_BG_PRESETS.real_emu.url, name: 'Iconic EMU Local (Authentic Photo)' })
   }).catch(err => {});
   toggleHeroBgModal(false);
 };
 
-function applyHeroBg(bgUrl, labelText = '') {
+function applyHeroBg(bgUrl = '', labelText = '') {
   const banner = document.getElementById('heroAtmosphericBanner');
   if (!banner) return;
 
-  banner.style.backgroundImage = `linear-gradient(90deg, rgba(7, 19, 30, 0.94) 0%, rgba(7, 19, 30, 0.82) 38%, rgba(7, 19, 30, 0.22) 75%, rgba(7, 19, 30, 0.35) 100%), radial-gradient(ellipse at 80% 50%, rgba(217, 119, 6, 0.20) 0%, rgba(7, 19, 30, 0) 70%), url('${bgUrl}')`;
-  banner.style.backgroundPosition = 'right center';
-  banner.style.backgroundSize = 'cover';
-  banner.style.backgroundRepeat = 'no-repeat';
+  // Solid colour theme without any images behind
+  banner.style.backgroundImage = 'none';
+  banner.style.backgroundColor = '#07131e';
 
   const label = document.getElementById('currentHeroBgLabel');
   if (label && labelText) {
@@ -1969,32 +2012,16 @@ function applyHeroBg(bgUrl, labelText = '') {
 }
 
 async function initHeroWallpaper() {
-  const savedBg = localStorage.getItem('centralsaathi_hero_bg');
-  const savedName = localStorage.getItem('centralsaathi_hero_bg_name');
-  if (savedBg) {
-    applyHeroBg(savedBg, savedName || 'Custom Train Photo');
-  }
-
-  // Check if a saved custom photo or preset exists on the server
+  // Clear any previously saved image preferences so solid colour is consistently applied
   try {
-    const res = await fetch('/api/current-hero-image');
-    if (res.ok) {
-      const data = await res.json();
-      if (data.exists && data.url) {
-        applyHeroBg(data.url, data.name || 'Saved Train Photo');
-        try {
-          localStorage.setItem('centralsaathi_hero_bg', data.url);
-          localStorage.setItem('centralsaathi_hero_bg_name', data.name || 'Saved Train Photo');
-        } catch (e) {}
-        return;
-      }
-    }
-  } catch (e) {
-    // fallback
-  }
+    localStorage.removeItem('centralsaathi_hero_bg');
+    localStorage.removeItem('centralsaathi_hero_bg_name');
+  } catch (e) {}
 
-  if (!savedBg) {
-    applyHeroBg(HERO_BG_PRESETS.dusk.url, 'Dusk EMU');
+  const banner = document.getElementById('heroAtmosphericBanner');
+  if (banner) {
+    banner.style.backgroundImage = 'none';
+    banner.style.backgroundColor = '#07131e';
   }
 }
 
@@ -2800,6 +2827,7 @@ function stopGpsTracking() {
   document.getElementById('gpsPromptCard')?.classList.remove('hidden');
   updateSpeedometerUI(0);
 }
+window.stopGpsTracking = stopGpsTracking;
 
 function updateSpeedometerUI(speedKmh) {
   const speedValEl = document.getElementById('speedValue');
@@ -2908,12 +2936,18 @@ window.startRideSimulation = function() {
       statusText.textContent = `Simulation Mode · Traversed ${simulationStep + 1}/${simulatedRoute.length} stations on route`;
     }
 
-    // Check alarm condition
-    if (isWakeAlarmArmed && wakeAlarmTargetStation) {
-      const dist = calculateHaversineDistance(current.lat, current.lng, wakeAlarmTargetStation.lat, wakeAlarmTargetStation.lng);
-      if (dist <= wakeAlarmDistanceThreshold) {
-        triggerAlarmBuzzer();
-        disarmWakeAlarm();
+    // Target Station for Alarm (Either user-chosen station or destination station)
+    const targetCode = wakeAlarmTargetStation?.code || document.getElementById('alarmStationSelect')?.value || currentDestCode || 'CSMT';
+    const target = allStations.find(s => s.code === targetCode) || simulatedRoute[simulatedRoute.length - 1];
+    
+    // Station arrival proximity & terminal check
+    const distToTarget = calculateHaversineDistance(current.lat, current.lng, target.lat, target.lng);
+    const isAtStation = (current.code === target.code) || (distToTarget <= (wakeAlarmDistanceThreshold || 1.5)) || (simulationStep === simulatedRoute.length - 1);
+
+    if (isAtStation && !isAlarmRinging) {
+      triggerStationArrivalAlarm(target, distToTarget, false);
+      if (statusText) {
+        statusText.textContent = `🔔 ARRIVED AT ${target.name}! Station Wake Alarm Triggered.`;
       }
     }
 
@@ -3061,43 +3095,79 @@ window.handleAlarmStationChanged = function(code) {
 };
 
 function armWakeAlarm(stnCode, thresholdKm) {
-  const code = stnCode || document.getElementById('alarmStationSelect')?.value || currentDestCode;
-  const stn = allStations.find(s => s.code === code);
+  const code = stnCode || document.getElementById('alarmStationSelect')?.value || currentDestCode || 'CSMT';
+  const stn = allStations.find(s => s.code === code) || allStations[0];
   if (!stn) return;
 
   wakeAlarmTargetStation = stn;
-  wakeAlarmDistanceThreshold = thresholdKm || 1.5;
+  wakeAlarmDistanceThreshold = parseFloat(thresholdKm) || 1.5;
   isWakeAlarmArmed = true;
 
-  document.getElementById('alarmActiveStatus')?.classList.remove('hidden');
+  // Unlock and prime audio engine
+  getAudioContext();
+
+  const statusEl = document.getElementById('alarmActiveStatus');
+  if (statusEl) statusEl.classList.remove('hidden');
   const targetEl = document.getElementById('activeAlarmTarget');
-  if (targetEl) targetEl.textContent = `${stn.name} (${wakeAlarmDistanceThreshold} km before arrival)`;
+  if (targetEl) targetEl.textContent = `${stn.name} (Sounds 1.5 km before or when arriving at station)`;
+
+  const statusText = document.getElementById('gpsStatusText');
+  if (statusText) statusText.textContent = `🔔 Wake alarm is ARMED for ${stn.name}! Will sound loud alarm upon arrival.`;
 }
 
 window.disarmWakeAlarm = function() {
   isWakeAlarmArmed = false;
   wakeAlarmTargetStation = null;
   document.getElementById('alarmActiveStatus')?.classList.add('hidden');
+  const statusText = document.getElementById('gpsStatusText');
+  if (statusText) statusText.textContent = 'Wake alarm disarmed.';
 };
 
 function checkWakeAlarmProximity(lat, lng) {
   if (!wakeAlarmTargetStation || !wakeAlarmTargetStation.lat) return;
 
   const distKm = calculateHaversineDistance(lat, lng, wakeAlarmTargetStation.lat, wakeAlarmTargetStation.lng);
-  if (distKm <= wakeAlarmDistanceThreshold) {
+  if (distKm <= wakeAlarmDistanceThreshold || distKm <= 0.3) {
     triggerStationArrivalAlarm(wakeAlarmTargetStation, distKm, false);
     disarmWakeAlarm();
   }
 }
 
-// Global Alarm State & 8-Second Auto-Stop Engine
+// Global Alarm State & Audio Engine
+let globalAudioCtx = null;
+function getAudioContext() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return null;
+    if (!globalAudioCtx) {
+      globalAudioCtx = new AudioCtx();
+    }
+    if (globalAudioCtx.state === 'suspended') {
+      globalAudioCtx.resume();
+    }
+    return globalAudioCtx;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Pre-unlock AudioContext on any user gesture anywhere in the page
+document.addEventListener('click', () => {
+  getAudioContext();
+}, { once: false });
+
 let alarmAudioInterval = null;
 let alarmTimeoutTimer = null;
 let alarmCountdownTimer = null;
 let alarmRemainingSeconds = 8;
 let isAlarmRinging = false;
 
-window.triggerStationArrivalAlarm = function(stationObj, distKm = 1.2, isTest = false) {
+function triggerAlarmBuzzer() {
+  triggerStationArrivalAlarm(wakeAlarmTargetStation, wakeAlarmDistanceThreshold || 1.2, false);
+}
+window.triggerAlarmBuzzer = triggerAlarmBuzzer;
+
+function triggerStationArrivalAlarm(stationObj, distKm = 0, isTest = false) {
   const modal = document.getElementById('stationArrivalAlarmModal');
   if (!modal) return;
 
@@ -3110,15 +3180,22 @@ window.triggerStationArrivalAlarm = function(stationObj, distKm = 1.2, isTest = 
   if (codeEl) codeEl.textContent = targetStn.code;
   const marathiEl = document.getElementById('alarmModalStationMarathi');
   if (marathiEl) marathiEl.textContent = targetStn.marathi_name || 'मध्य रेल्वे स्थानक';
+  
+  const distNum = Number(distKm);
   const distEl = document.getElementById('alarmModalDistance');
-  if (distEl) distEl.textContent = isTest ? '1.2 km (Test Mode)' : `~${Number(distKm).toFixed(1)} km ahead`;
+  if (distEl) {
+    if (isTest) distEl.textContent = 'At Station (Test Mode)';
+    else if (distNum <= 0.3) distEl.textContent = 'At Station Halt (0 km)';
+    else distEl.textContent = `~${distNum.toFixed(1)} km ahead`;
+  }
+
   const doorEl = document.getElementById('alarmModalDoorSide');
   if (doorEl) doorEl.textContent = targetStn.door_side ? `Door: ${targetStn.door_side}` : 'Door: Left & Right';
 
   const subtextEl = document.getElementById('alarmModalSubtext');
   if (subtextEl) {
-    subtextEl.textContent = isTest
-      ? 'Test Mode: Alarm rings continuously until you stop it, or automatically stops in 8 seconds.'
+    subtextEl.textContent = (distNum <= 0.3 || isTest)
+      ? `You have reached ${targetStn.name}! Deboard train now from ${targetStn.door_side || 'Left'} side!`
       : `Your train is approaching ${targetStn.name}! Prepare to deboard from ${targetStn.door_side || 'Left'} side.`;
   }
 
@@ -3132,6 +3209,7 @@ window.triggerStationArrivalAlarm = function(stationObj, distKm = 1.2, isTest = 
   modal.classList.remove('hidden');
   isAlarmRinging = true;
 
+  // Play alarm buzzer chime immediately and on pulse
   playAudibleChime();
   if (alarmAudioInterval) clearInterval(alarmAudioInterval);
   alarmAudioInterval = setInterval(() => {
@@ -3162,7 +3240,8 @@ window.triggerStationArrivalAlarm = function(stationObj, distKm = 1.2, isTest = 
   alarmTimeoutTimer = setTimeout(() => {
     stopStationArrivalAlarm(true);
   }, 8000);
-};
+}
+window.triggerStationArrivalAlarm = triggerStationArrivalAlarm;
 
 window.stopStationArrivalAlarm = function(wasAutoStopped = false) {
   isAlarmRinging = false;
@@ -3182,54 +3261,84 @@ window.stopStationArrivalAlarm = function(wasAutoStopped = false) {
   document.getElementById('stationArrivalAlarmModal')?.classList.add('hidden');
   disarmWakeAlarm();
 
+  // AUTOMATICALLY STOP LIVE TRACKING (GPS & SIMULATION)
+  stopGpsTracking();
+
+  // Also stop Map Satellite Radar train simulation if active
+  if (typeof mapSimulationTimer !== 'undefined' && mapSimulationTimer) {
+    clearInterval(mapSimulationTimer);
+    mapSimulationTimer = null;
+    mapSimulationIsPlaying = false;
+    const playIcon = document.getElementById('hudSimPlayIcon');
+    if (playIcon) playIcon.textContent = 'Start';
+  }
+
   const statusText = document.getElementById('gpsStatusText');
   if (statusText) {
     statusText.textContent = wasAutoStopped
-      ? 'Station wake alarm automatically silenced after 8 seconds.'
-      : 'Station wake alarm stopped by commuter.';
+      ? 'Station wake alarm finished. Live tracking stopped automatically.'
+      : 'Station wake alarm stopped by commuter. Live tracking stopped automatically.';
   }
 };
 
 window.testAlarmPopupModal = function() {
   const code = document.getElementById('alarmStationSelect')?.value || currentDestCode || 'DR';
   const stn = allStations.find(s => s.code === code) || allStations[0];
-  triggerStationArrivalAlarm(stn, 1.2, true);
+  triggerStationArrivalAlarm(stn, 0, true);
+};
+
+window.testAlarmForSelectedStation = function() {
+  const code = document.getElementById('alarmStationSelect')?.value || currentDestCode || 'DR';
+  const stn = allStations.find(s => s.code === code) || allStations[0];
+  triggerStationArrivalAlarm(stn, 0, true);
 };
 
 function playAudibleChime() {
   try {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (AudioCtx) {
-      const ctx = new AudioCtx();
+    const ctx = getAudioContext();
+    if (ctx) {
+      if (ctx.state === 'suspended') ctx.resume();
+      const t = ctx.currentTime;
+
+      // Primary High Alert Dual-Tone Siren
       const osc1 = ctx.createOscillator();
       const osc2 = ctx.createOscillator();
       const gain = ctx.createGain();
 
-      osc1.type = 'triangle';
-      osc1.frequency.setValueAtTime(880, ctx.currentTime);
-      osc1.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.3);
+      osc1.type = 'sawtooth';
+      osc1.frequency.setValueAtTime(880, t); // A5
+      osc1.frequency.linearRampToValueAtTime(1320, t + 0.25); // E6
+      osc1.frequency.linearRampToValueAtTime(880, t + 0.5);
 
-      osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(440, ctx.currentTime);
-      osc2.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.3);
+      osc2.type = 'square';
+      osc2.frequency.setValueAtTime(440, t); // A4
+      osc2.frequency.linearRampToValueAtTime(660, t + 0.25); // E5
+      osc2.frequency.linearRampToValueAtTime(440, t + 0.5);
 
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.2);
+      gain.gain.setValueAtTime(0.4, t);
+      gain.gain.exponentialRampToValueAtTime(0.02, t + 0.85);
 
       osc1.connect(gain);
       osc2.connect(gain);
       gain.connect(ctx.destination);
 
-      osc1.start();
-      osc2.start();
-      setTimeout(() => {
-        osc1.stop();
-        osc2.stop();
-      }, 1300);
+      osc1.start(t);
+      osc2.start(t);
+      osc1.stop(t + 0.85);
+      osc2.stop(t + 0.85);
     }
   } catch (e) {
     console.warn('Audio chime error:', e);
   }
+
+  // Native voice synthesis alert backup
+  try {
+    if ('speechSynthesis' in window && !window.speechSynthesis.speaking) {
+      const msg = new SpeechSynthesisUtterance('Station reached! Wake up and deboard train now.');
+      msg.rate = 1.1;
+      window.speechSynthesis.speak(msg);
+    }
+  } catch (e) {}
 }
 
 function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
@@ -3462,25 +3571,51 @@ async function loadCoachLayout() {
 }
 
 function populateToolDropdowns() {
-  const originSelect = document.getElementById('fareCalcOriginSelect');
-  const destSelect = document.getElementById('fareCalcDestSelect');
-  const alarmSelect = document.getElementById('alarmStationSelect');
+  if (!allStations || allStations.length === 0) return;
 
-  if (!originSelect || allStations.length === 0) return;
+  const fareFrom = document.getElementById('fareCalcOriginSelect');
+  const fareTo = document.getElementById('fareCalcDestSelect');
+  const alarmSel = document.getElementById('alarmStationSelect');
+  const doorFrom = document.getElementById('doorCalcOriginSelect');
+  const doorTo = document.getElementById('doorCalcDestSelect');
+  const utsStation = document.getElementById('utsGeofenceStationSelect');
+  const fineFrom = document.getElementById('acFineFromSelect');
+  const fineTo = document.getElementById('acFineToSelect');
 
-  originSelect.innerHTML = '';
-  destSelect.innerHTML = '';
-  if (alarmSelect) alarmSelect.innerHTML = '';
+  const fillSelect = (el, defaultCode) => {
+    if (!el) return;
+    const currentVal = el.value;
+    el.innerHTML = '';
+    allStations.forEach(s => {
+      const isSelected = currentVal ? s.code === currentVal : s.code === defaultCode;
+      el.add(new Option(`${s.name} (${s.code})`, s.code, false, isSelected));
+    });
+  };
 
-  allStations.forEach(s => {
-    originSelect.add(new Option(`${s.name} (${s.code})`, s.code, false, s.code === 'TNA'));
-    destSelect.add(new Option(`${s.name} (${s.code})`, s.code, false, s.code === 'CSMT'));
-    if (alarmSelect) alarmSelect.add(new Option(`${s.name} (${s.code})`, s.code, false, s.code === 'DR'));
-  });
+  fillSelect(fareFrom, 'TNA');
+  fillSelect(fareTo, 'CSMT');
+  fillSelect(alarmSel, 'CSMT');
+  fillSelect(doorFrom, 'TNA');
+  fillSelect(doorTo, 'CSMT');
+  fillSelect(utsStation, 'DR');
+  fillSelect(fineFrom, 'TNA');
+  fillSelect(fineTo, 'CSMT');
 
-  originSelect.addEventListener('change', calculateCustomFares);
-  destSelect.addEventListener('change', calculateCustomFares);
+  fareFrom?.addEventListener('change', calculateCustomFares);
+  fareTo?.addEventListener('change', calculateCustomFares);
+  doorFrom?.addEventListener('change', calculateDoorSideRoute);
+  doorTo?.addEventListener('change', calculateDoorSideRoute);
+  utsStation?.addEventListener('change', checkUtsGeofence);
+  fineFrom?.addEventListener('change', calculateAcFineDifference);
+  fineTo?.addEventListener('change', calculateAcFineDifference);
+
   calculateCustomFares();
+  updateCoachCrowdSimulation();
+  calculateDoorSideRoute();
+  calculateLuggageTariff();
+  checkUtsGeofence();
+  calculateRWalletBonus(1000);
+  calculateAcFineDifference();
 }
 
 async function calculateCustomFares() {
@@ -3657,6 +3792,461 @@ async function calculateCustomFares() {
     console.warn('Fare calc error:', err);
   }
 }
+
+// ----------------------------------------------------
+// COMMUTER SUITE TOOL 2: COACH & CROWD STRATEGY
+// ----------------------------------------------------
+let currentCrowdDirection = 'UP';
+let currentInspectedCoach = 2;
+
+window.setCrowdDirection = function(dir) {
+  currentCrowdDirection = dir;
+  const upBtn = document.getElementById('btnCrowdDirUp');
+  const downBtn = document.getElementById('btnCrowdDirDown');
+  if (dir === 'UP') {
+    upBtn?.classList.add('bg-[#064e3b]', 'text-white', 'border-[#064e3b]', 'font-black');
+    upBtn?.classList.remove('bg-white', 'text-slate-700', 'border-slate-200');
+    downBtn?.classList.remove('bg-[#064e3b]', 'text-white', 'border-[#064e3b]', 'font-black');
+    downBtn?.classList.add('bg-white', 'text-slate-700', 'border-slate-200');
+  } else {
+    downBtn?.classList.add('bg-[#064e3b]', 'text-white', 'border-[#064e3b]', 'font-black');
+    downBtn?.classList.remove('bg-white', 'text-slate-700', 'border-slate-200');
+    upBtn?.classList.remove('bg-[#064e3b]', 'text-white', 'border-[#064e3b]', 'font-black');
+    upBtn?.classList.add('bg-white', 'text-slate-700', 'border-slate-200');
+  }
+  updateCoachCrowdSimulation();
+};
+
+window.updateCoachCrowdSimulation = function() {
+  const container = document.getElementById('interactiveRakeContainer');
+  const slot = document.getElementById('crowdTimeSlotSelect')?.value || 'MORNING_PEAK';
+  if (!container) return;
+
+  const coaches = [
+    { num: 1, type: 'Motorman / General II', isLadies: false, isFC: false, fob: 'CST End Buffer' },
+    { num: 2, type: 'General Second Class (II)', isLadies: false, isFC: false, fob: 'Front Staircase' },
+    { num: 3, type: 'Divyangjan & Cancer Patients', isLadies: false, isFC: false, fob: 'Middle Ramp' },
+    { num: 4, type: 'Ladies First Class (FC)', isLadies: true, isFC: true, fob: 'Platform Center FOB' },
+    { num: 5, type: 'General Second Class (II)', isLadies: false, isFC: false, fob: 'Dadar Main Overbridge' },
+    { num: 6, type: 'First Class General (FC)', isLadies: false, isFC: true, fob: 'Thane PF 2 Center FOB' },
+    { num: 7, type: 'General Second Class (II)', isLadies: false, isFC: false, fob: 'Kurla Interchange Escalator' },
+    { num: 8, type: 'Ladies Second Class (II)', isLadies: true, isFC: false, fob: 'Center FOB' },
+    { num: 9, type: 'General Second Class (II)', isLadies: false, isFC: false, fob: 'Rear Staircase' },
+    { num: 10, type: 'Vendor & Luggage Van', isLadies: false, isFC: false, fob: 'Vendor Ramp' },
+    { num: 11, type: 'General Second Class (II)', isLadies: false, isFC: false, fob: 'Rear Foot-Overbridge' },
+    { num: 12, type: 'Guard Cabin / Ladies (II)', isLadies: true, isFC: false, fob: 'Kalyan End Overbridge' }
+  ];
+
+  let html = '';
+  coaches.forEach(c => {
+    let baseCrowd = 60;
+    if (slot === 'MORNING_PEAK') {
+      baseCrowd = (currentCrowdDirection === 'UP') ? 85 : 55;
+      if (c.num >= 5 && c.num <= 7) baseCrowd += 12;
+      if (c.num === 2 || c.num === 11) baseCrowd -= 18;
+    } else if (slot === 'EVENING_PEAK') {
+      baseCrowd = (currentCrowdDirection === 'DOWN') ? 88 : 50;
+      if (c.num >= 5 && c.num <= 7) baseCrowd += 10;
+      if (c.num === 2 || c.num === 11) baseCrowd -= 16;
+    } else if (slot === 'AFTERNOON_OFFPEAK') {
+      baseCrowd = 40;
+    } else {
+      baseCrowd = 28;
+    }
+
+    baseCrowd = Math.min(98, Math.max(20, baseCrowd));
+    let colorClass = 'bg-emerald-500';
+    let badgeText = 'Light';
+    if (baseCrowd >= 80) {
+      colorClass = 'bg-rose-500';
+      badgeText = 'Super Dense';
+    } else if (baseCrowd >= 60) {
+      colorClass = 'bg-amber-500';
+      badgeText = 'Crowded';
+    } else if (baseCrowd >= 40) {
+      colorClass = 'bg-teal-500';
+      badgeText = 'Moderate';
+    }
+
+    const isSelected = (c.num === currentInspectedCoach);
+
+    html += `
+      <div 
+        onclick="inspectCoach(${c.num})" 
+        class="shrink-0 w-24 p-2.5 rounded-xl cursor-pointer transition-all border text-center ${isSelected ? 'border-emerald-400 bg-white/20 shadow-md ring-2 ring-emerald-400' : 'border-white/10 bg-white/5 hover:bg-white/10'}"
+        title="Tap to inspect Coach ${c.num}"
+      >
+        <div class="text-[10px] uppercase font-bold text-slate-300">Coach ${c.num}</div>
+        <div class="text-xs font-black text-white mt-0.5 truncate">${c.isFC ? '⭐ FC' : (c.isLadies ? '👩 Ladies' : 'General')}</div>
+        <div class="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden my-1.5">
+          <div class="${colorClass} h-full rounded-full transition-all duration-300" style="width: ${baseCrowd}%"></div>
+        </div>
+        <div class="text-[9px] font-bold ${baseCrowd >= 80 ? 'text-rose-300' : (baseCrowd >= 60 ? 'text-amber-300' : 'text-emerald-300')}">
+          ${baseCrowd}% · ${badgeText}
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+  inspectCoach(currentInspectedCoach);
+
+  const recEl = document.getElementById('crowdRecommendationText');
+  if (recEl) {
+    if (slot === 'MORNING_PEAK') {
+      recEl.innerHTML = currentCrowdDirection === 'UP'
+        ? 'During morning rush to CSMT, <strong>Coach 2 (General)</strong> and <strong>Coach 11 (General)</strong> have ~40% less boarding crush than central Coaches 5–7 which align directly with Dadar and Thane main foot-over-bridges.'
+        : 'Morning trains towards Kalyan/Karjat have lighter traffic. Coaches 4–9 offer comfortable seating after passing Kurla.';
+    } else if (slot === 'EVENING_PEAK') {
+      recEl.innerHTML = currentCrowdDirection === 'DOWN'
+        ? 'During evening peak towards Kalyan, avoid Coaches 6–8 at Dadar and Thane interchange FOBs. Board Coaches 1–3 at CSMT or Byculla for significantly easier entry.'
+        : 'Trains towards CSMT in the evening run with comfortable seating across all coaches.';
+    } else {
+      recEl.innerHTML = 'Off-peak window: Comfortable seating is available throughout all 12 coaches. Ideal for carrying folding bicycles or luggage.';
+    }
+  }
+};
+
+window.inspectCoach = function(coachNum) {
+  currentInspectedCoach = coachNum;
+  const inspector = document.getElementById('coachDetailInspectorBox');
+  if (!inspector) return;
+
+  const coachCatalog = {
+    1: { name: 'Coach 1 (Front Motorman Cab)', class: 'General Second Class (II)', rush: 'Moderate', desc: 'Positioned right behind the motorman cabin. Quick exit at CSMT Platform 1-7 buffer gates.', fob: 'CST Buffer Gate & Taxi Stand', penalty: 'Standard suburban rules' },
+    2: { name: 'Coach 2 (Front Second Class)', class: 'General Second Class (II)', rush: 'Low-Medium (Recommended)', desc: 'Optimal boarding choice! Noticeably less crush during morning peak compared to center coaches.', fob: 'Front FOB at Dadar PF 2 & Thane PF 3', penalty: 'Standard suburban rules' },
+    3: { name: 'Coach 3 (Divyangjan & Cancer Patients)', class: 'Reserved Divyangjan / Cancer Patients', rush: 'Strictly Reserved', desc: 'Exclusively reserved for persons with disabilities, cancer patients, and senior citizens with ramp accessibility.', fob: 'Platform Ramp Access', penalty: '₹500 Fine + Prosecution under Section 155 for unauthorized entry' },
+    4: { name: 'Coach 4 (Ladies First Class)', class: 'First Class (FC Ladies Only)', rush: 'Moderate to High', desc: 'Reserved exclusively for women commuters holding First Class tickets or season passes 24/7.', fob: 'Center Platform FOB', penalty: 'Section 162: Up to ₹500 fine and ejection for male passengers' },
+    5: { name: 'Coach 5 (Mid Second Class)', class: 'General Second Class (II)', rush: 'Super-Dense Crush', desc: 'Highest boarding density! Aligns directly with main stairs at Dadar, Kurla, and Thane.', fob: 'Main Foot-Overbridge Stairs', penalty: 'Standard suburban rules' },
+    6: { name: 'Coach 6 (First Class General)', class: 'First Class (FC Cushioned)', rush: 'Heavy', desc: 'Cushioned seating. High demand among office commuters between Thane/Dombivli and South Mumbai.', fob: 'Center Platform FOB', penalty: 'Section 138: ₹250 penalty + First Class fare difference if holding II class' },
+    7: { name: 'Coach 7 (Mid General)', class: 'General Second Class (II)', rush: 'Super-Dense Crush', desc: 'Very heavy interchange crowd. Avoid boarding here at Ghatkopar Metro interchange.', fob: 'Ghatkopar Metro Connector / Kurla Bridge', penalty: 'Standard suburban rules' },
+    8: { name: 'Coach 8 (Ladies Second Class)', class: 'Ladies Second Class (II Only)', rush: 'Heavy', desc: 'Reserved for women passengers 24x7. CCTV monitored with RPF escort staff after 9:00 PM.', fob: 'Center FOB', penalty: 'Section 162: Immediate arrest & ₹500 fine for male passengers' },
+    9: { name: 'Coach 9 (Rear Second Class)', class: 'General Second Class (II)', rush: 'Heavy', desc: 'Aligns with east-side escalators at Thane and Kalyan. High passenger throughput.', fob: 'East Escalator & Skywalk', penalty: 'Standard suburban rules' },
+    10: { name: 'Coach 10 (Vendor & Luggage Van)', class: 'Luggage & Vendor Parcel Van', rush: 'Luggage Only', desc: 'Designated space for heavy luggage, Dabbawalas, milk canisters, and vegetables. Bicycle carriage permitted.', fob: 'Goods Ramp', penalty: 'Personal commuters without luggage should avoid entering during loading' },
+    11: { name: 'Coach 11 (Rear General)', class: 'General Second Class (II)', rush: 'Optimal (Less Crowd)', desc: 'Excellent boarding choice for deboarding at Kalyan, Thane East, or Mulund.', fob: 'Rear Foot-Overbridge', penalty: 'Standard suburban rules' },
+    12: { name: 'Coach 12 (Guard Cabin / Ladies II)', class: 'Ladies Second Class + Guard', rush: 'Moderate', desc: 'Guard cabin at extreme end. Rear women compartment with emergency talkback unit.', fob: 'Kalyan End Overbridge', penalty: 'Section 162 enforcement' }
+  };
+
+  const item = coachCatalog[coachNum] || coachCatalog[2];
+
+  inspector.innerHTML = `
+    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
+      <div>
+        <span class="text-[10px] font-black uppercase text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">Inspected Coach ${coachNum}</span>
+        <h4 class="text-base font-black text-slate-900 mt-1">${item.name}</h4>
+        <span class="text-xs font-bold text-slate-600">${item.class}</span>
+      </div>
+      <span class="text-xs font-black px-3 py-1 rounded-xl bg-slate-900 text-white shadow-2xs">
+        Rush: ${item.rush}
+      </span>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 text-xs">
+      <div>
+        <strong class="text-slate-800 block mb-0.5">Boarding Profile &amp; Flow:</strong>
+        <p class="text-slate-600 leading-relaxed">${item.desc}</p>
+      </div>
+      <div>
+        <strong class="text-slate-800 block mb-0.5">Platform Overbridge / Staircase Alignment:</strong>
+        <p class="text-emerald-800 font-semibold leading-relaxed">🔗 ${item.fob}</p>
+      </div>
+    </div>
+
+    <div class="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start gap-2">
+      <span class="text-sm">⚠️</span>
+      <div>
+        <strong>Rules &amp; Penalties:</strong>
+        <span class="ml-1">${item.penalty}</span>
+      </div>
+    </div>
+  `;
+};
+
+// ----------------------------------------------------
+// COMMUTER SUITE TOOL 3: DOOR-SIDE OPENING & EXIT NAVIGATOR
+// ----------------------------------------------------
+window.calculateDoorSideRoute = function() {
+  const fromCode = document.getElementById('doorCalcOriginSelect')?.value || 'TNA';
+  const toCode = document.getElementById('doorCalcDestSelect')?.value || 'CSMT';
+  const container = document.getElementById('doorRouteResultContainer');
+  if (!container || allStations.length === 0) return;
+
+  const stops = getSynthesizedStopsBetweenClient(fromCode, toCode);
+
+  let html = `
+    <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex flex-wrap items-center justify-between gap-2 text-xs mb-3">
+      <div class="font-extrabold text-slate-900">
+        Door Opening Sequence: ${fromCode} ➔ ${toCode} (${stops.length} Station Halts)
+      </div>
+      <span class="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
+        Prepare 2 Mins Before Halt
+      </span>
+    </div>
+    <div class="space-y-2">
+  `;
+
+  const rightDoorStations = ['MSD', 'DR', 'GC', 'VK', 'CLA', 'DI', 'KYN'];
+  const bothDoorStations = ['TNA', 'DR'];
+
+  stops.forEach((code, idx) => {
+    const stn = allStations.find(s => s.code === code) || { name: code, code: code };
+    let doorSide = 'LEFT';
+    let doorBadge = 'bg-emerald-100 text-emerald-800 border-emerald-300';
+    let doorIcon = '🚪 LEFT SIDE';
+
+    if (bothDoorStations.includes(code)) {
+      doorSide = 'BOTH';
+      doorBadge = 'bg-purple-100 text-purple-800 border-purple-300';
+      doorIcon = '🚪 BOTH SIDES (Island PF)';
+    } else if (rightDoorStations.includes(code)) {
+      doorSide = 'RIGHT';
+      doorBadge = 'bg-blue-100 text-blue-800 border-blue-300';
+      doorIcon = '🚪 RIGHT SIDE';
+    }
+
+    const isFirst = (idx === 0);
+    const isLast = (idx === stops.length - 1);
+
+    html += `
+      <div class="p-3 bg-white border border-slate-200 rounded-2xl flex items-center justify-between gap-3 shadow-2xs hover:border-slate-300 transition-all">
+        <div class="flex items-center gap-3">
+          <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${isFirst ? 'bg-emerald-600 text-white' : (isLast ? 'bg-rose-600 text-white' : 'bg-slate-100 text-slate-700')}">
+            ${idx + 1}
+          </div>
+          <div>
+            <div class="text-xs font-black text-slate-900 flex items-center gap-1.5">
+              <span>${stn.name} (${stn.code})</span>
+              ${isFirst ? '<span class="text-[10px] text-emerald-700 font-bold">· Boarding</span>' : ''}
+              ${isLast ? '<span class="text-[10px] text-rose-700 font-bold">· Deboarding Terminal</span>' : ''}
+            </div>
+            <div class="text-[10px] text-slate-500 mt-0.5">
+              ${stn.platforms ? `${stn.platforms} Platforms` : 'Suburban PF'} · Overbridge stairs &amp; lifts towards center
+            </div>
+          </div>
+        </div>
+
+        <span class="text-xs font-extrabold px-3 py-1.5 rounded-xl border ${doorBadge} shrink-0">
+          ${doorIcon}
+        </span>
+      </div>
+    `;
+  });
+
+  html += '</div>';
+  container.innerHTML = html;
+};
+
+// ----------------------------------------------------
+// COMMUTER SUITE TOOL 4: LUGGAGE & BICYCLE PERMIT TARIFF
+// ----------------------------------------------------
+window.calculateLuggageTariff = function() {
+  const type = document.getElementById('luggageTypeSelect')?.value || 'BICYCLE';
+  const dist = document.getElementById('luggageDistSelect')?.value || 'MEDIUM';
+  const weight = parseInt(document.getElementById('luggageWeightSlider')?.value || '15', 10);
+  const resultCard = document.getElementById('luggageResultCard');
+  if (!resultCard) return;
+
+  let fee = 0;
+  let freeAllowance = 35;
+  let statusBadge = 'bg-emerald-100 text-emerald-800';
+  let statusText = 'Allowed Within Free Allowance';
+  let advisory = '';
+
+  if (type === 'BICYCLE') {
+    freeAllowance = 0;
+    fee = dist === 'SHORT' ? 30 : (dist === 'MEDIUM' ? 45 : 60);
+    statusBadge = 'bg-blue-100 text-blue-800';
+    statusText = 'Requires Cycle Booking Slip';
+    advisory = 'Bicycles are strictly PROHIBITED during Morning Peak (08:30–11:30 AM) and Evening Peak (17:30–20:30 PM) in suburban trains. Allowed only during off-peak hours (11:30 AM–04:30 PM, after 08:30 PM) and all day Sunday. Non-booking carries a ₹500 fine under Section 154.';
+  } else if (type === 'VENDOR') {
+    freeAllowance = 20;
+    const excess = Math.max(0, weight - freeAllowance);
+    fee = Math.max(30, excess * 2.5);
+    statusBadge = 'bg-amber-100 text-amber-800';
+    statusText = 'Vendor Compartment Only (Coach 3 & 10)';
+    advisory = 'Heavy vendor items and milk canisters must travel strictly in Vendor/Luggage compartments (Coach 3 & 10). Carrying vendor goods into general coaches violates Section 154.';
+  } else if (type === 'PET') {
+    freeAllowance = 0;
+    fee = 60;
+    statusBadge = 'bg-purple-100 text-purple-800';
+    statusText = 'First Class Coupe / Dog Box in Brake Van';
+    advisory = 'Small domestic pets are permitted in First Class compartments only if passenger books a coupe or in the brake van dog box with veterinary fitness certificate (Section 156).';
+  } else {
+    freeAllowance = 35;
+    if (weight > freeAllowance) {
+      const excess = weight - freeAllowance;
+      const ratePerKg = dist === 'SHORT' ? 1.5 : (dist === 'MEDIUM' ? 2.5 : 3.5);
+      fee = Math.max(30, Math.round(excess * ratePerKg));
+      statusBadge = 'bg-rose-100 text-rose-800';
+      statusText = `Excess Weight (${excess} kg over ${freeAllowance} kg quota)`;
+      advisory = `You exceed the free suburban limit of ${freeAllowance} kg. Pay luggage ticket tariff of ₹${fee} at booking counter to avoid 6x penal luggage surcharge under Section 138.`;
+    } else {
+      fee = 0;
+      statusBadge = 'bg-emerald-100 text-emerald-800';
+      statusText = `Free Allowance Permitted (${weight} kg <= ${freeAllowance} kg)`;
+      advisory = `Your baggage is well within the free luggage quota of ${freeAllowance} kg (II Class) and 40 kg (I Class). Zero additional tariff required.`;
+    }
+  }
+
+  resultCard.innerHTML = `
+    <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <span class="text-xs font-black uppercase px-2.5 py-1 rounded-lg border ${statusBadge}">${statusText}</span>
+        <div class="text-right">
+          <span class="text-xs text-slate-400 font-semibold block">Calculated Tariff</span>
+          <span class="text-xl font-black text-slate-900">${fee === 0 ? 'FREE (₹0)' : `₹${fee}`}</span>
+        </div>
+      </div>
+      <p class="text-xs text-slate-600 leading-relaxed">${advisory}</p>
+    </div>
+  `;
+};
+
+// ----------------------------------------------------
+// COMMUTER SUITE TOOL 5: UTS R-WALLET & GEOFENCE
+// ----------------------------------------------------
+window.setRWalletAmount = function(amt) {
+  const input = document.getElementById('rWalletCustomInput');
+  if (input) input.value = amt;
+  calculateRWalletBonus(amt);
+};
+
+window.calculateRWalletBonus = function(amountVal) {
+  const amt = parseFloat(amountVal) || 1000;
+  const bonus = Math.round(amt * 0.03);
+  const total = amt + bonus;
+  const container = document.getElementById('rWalletCalculationDisplay');
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="p-3 bg-white border border-slate-200 rounded-xl">
+      <span class="text-slate-400 text-[10px] block font-semibold">You Recharge</span>
+      <span class="text-base font-black text-slate-900">₹${amt}</span>
+    </div>
+    <div class="p-3 bg-emerald-100/60 border border-emerald-300 rounded-xl">
+      <span class="text-emerald-800 text-[10px] block font-bold">3% Free Bonus</span>
+      <span class="text-base font-black text-emerald-800">+₹${bonus}</span>
+    </div>
+    <div class="p-3 bg-white border border-slate-200 rounded-xl">
+      <span class="text-slate-400 text-[10px] block font-semibold">Wallet Credit</span>
+      <span class="text-base font-black text-slate-900">₹${total}</span>
+    </div>
+    <div class="p-3 bg-white border border-slate-200 rounded-xl">
+      <span class="text-slate-400 text-[10px] block font-semibold">Payment Gateway</span>
+      <span class="text-base font-black text-emerald-700">₹0 (Free)</span>
+    </div>
+  `;
+};
+
+window.checkUtsGeofence = function() {
+  const dist = parseFloat(document.getElementById('utsDistanceSlider')?.value || '2.5');
+  const resultBox = document.getElementById('utsGeofenceResultBox');
+  if (!resultBox) return;
+
+  if (dist < 0.05) {
+    resultBox.innerHTML = `
+      <div class="flex items-center gap-2 text-rose-700 font-extrabold">
+        <span>🚫</span>
+        <span>GEOFENCE BLOCKED: Inside Railway Track / Station Zone</span>
+      </div>
+      <p class="text-slate-600 mt-1 text-[11px] leading-relaxed">
+        UTS Mobile strictly prohibits booking tickets within 30-50 meters of railway tracks and on station platforms to prevent ticketless passengers from booking upon seeing Ticket Collectors (TC). Move at least 50m outside the station premises.
+      </p>
+    `;
+  } else if (dist <= 20.0) {
+    resultBox.innerHTML = `
+      <div class="flex items-center gap-2 text-emerald-800 font-extrabold">
+        <span>✅</span>
+        <span>GEOFENCE VALID: Ready To Book (${dist.toFixed(1)} km from station)</span>
+      </div>
+      <p class="text-slate-600 mt-1 text-[11px] leading-relaxed">
+        You are outside the track restriction zone and within the 20 km outer perimeter. Paperless suburban single journey, return tickets, and monthly passes can be booked instantly.
+      </p>
+    `;
+  } else {
+    resultBox.innerHTML = `
+      <div class="flex items-center gap-2 text-amber-700 font-extrabold">
+        <span>⚠️</span>
+        <span>OUT OF RANGE: Distance exceeds 20 km</span>
+      </div>
+      <p class="text-slate-600 mt-1 text-[11px] leading-relaxed">
+        UTS Mobile requires GPS location to be within 20 km of the suburban origin station. Move closer or select a nearer suburban station.
+      </p>
+    `;
+  }
+};
+
+window.calculateAdvanceRenewalDate = function(dateStr) {
+  const badge = document.getElementById('advanceRenewalResultBadge');
+  if (!badge || !dateStr) return;
+  const expiry = new Date(dateStr);
+  if (isNaN(expiry.getTime())) return;
+
+  const renewDate = new Date(expiry);
+  renewDate.setDate(renewDate.getDate() - 10);
+  const options = { day: 'numeric', month: 'short', year: 'numeric' };
+  badge.textContent = `Can renew from: ${renewDate.toLocaleDateString('en-IN', options)}`;
+};
+
+// ----------------------------------------------------
+// COMMUTER SUITE TOOL 6: AC LOCAL FINE & CLINIC FINDER
+// ----------------------------------------------------
+window.calculateAcFineDifference = function() {
+  const ticketType = document.getElementById('acFineTicketTypeSelect')?.value || 'FIRST_CLASS_PASS';
+  const resultCard = document.getElementById('acFineResultCard');
+  if (!resultCard) return;
+
+  const acFare = 135;
+  const firstFare = 105;
+  const secondFare = 10;
+
+  let penalty = 250;
+  let fareDiff = 0;
+  let explanation = '';
+
+  if (ticketType === 'FIRST_CLASS_PASS') {
+    fareDiff = acFare - firstFare;
+    const totalPayable = penalty + fareDiff;
+    explanation = `Holding a First Class suburban pass inside AC Local is a breach of AC tariff rules under Section 138. The Ticket Examiner charges a standard flat penalty of ₹250 plus the difference between AC single ticket (₹${acFare}) and First Class single ticket (₹${firstFare}), totalling ₹${totalPayable}.`;
+  } else if (ticketType === 'FIRST_CLASS_SINGLE') {
+    fareDiff = acFare - firstFare;
+    const totalPayable = penalty + fareDiff;
+    explanation = `First Class single tickets are not valid for AC Local travel. Penalty payable: ₹250 statutory fine + ₹${fareDiff} fare difference = ₹${totalPayable}.`;
+  } else if (ticketType === 'SECOND_CLASS_PASS') {
+    fareDiff = acFare - secondFare;
+    const totalPayable = penalty + fareDiff;
+    explanation = `Second class pass holders inside AC Local are liable for ₹250 penalty plus full difference to AC fare (₹${fareDiff}), totalling ₹${totalPayable}.`;
+  } else {
+    fareDiff = acFare;
+    const totalPayable = penalty + acFare;
+    explanation = `Travelling ticketless inside AC Local incurs a ₹250 statutory penalty plus full AC journey fare (₹${acFare}) = ₹${totalPayable}. Refusal to pay leads to prosecution under Section 137.`;
+  }
+
+  const total = penalty + fareDiff;
+
+  resultCard.innerHTML = `
+    <div class="p-4 bg-white border border-rose-200 rounded-2xl space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-rose-100 pb-2">
+        <span class="text-xs font-black text-rose-900 uppercase">Penalty Summary (Section 138)</span>
+        <div class="text-right">
+          <span class="text-xs text-slate-400 block font-semibold">Total Amount Due</span>
+          <span class="text-2xl font-black text-rose-700">₹${total}</span>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <div class="p-2.5 bg-slate-50 rounded-xl">
+          <span class="text-slate-400 text-[10px] block">Statutory Penalty:</span>
+          <strong class="text-slate-900 font-bold">₹${penalty}</strong>
+        </div>
+        <div class="p-2.5 bg-slate-50 rounded-xl">
+          <span class="text-slate-400 text-[10px] block">AC Fare Difference:</span>
+          <strong class="text-slate-900 font-bold">₹${fareDiff}</strong>
+        </div>
+      </div>
+      <p class="text-xs text-slate-600 leading-relaxed">${explanation}</p>
+    </div>
+  `;
+};
 
 async function loadBulletins() {
   const container = document.getElementById('tabBulletinsList');

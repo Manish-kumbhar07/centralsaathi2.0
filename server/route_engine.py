@@ -57,26 +57,41 @@ def resolve_station(conn, query_str):
     cur = conn.cursor()
 
     # 1. Check exact code
-    cur.execute("SELECT * FROM stations WHERE UPPER(station_code) = UPPER(?)", (q,))
+    cur.execute("""
+        SELECT station_code, short_name, station_name, aliases, line, dist_from_csmt_km
+        FROM stations
+        WHERE UPPER(station_code) = UPPER(?)
+    """, (q,))
     row = cur.fetchone()
     if row:
         return dict(row)
 
     # 2. Check alias or name exact match
-    cur.execute("SELECT * FROM stations WHERE UPPER(short_name) = UPPER(?) OR UPPER(station_name) = UPPER(?)", (q, q))
+    cur.execute("""
+        SELECT station_code, short_name, station_name, aliases, line, dist_from_csmt_km
+        FROM stations
+        WHERE UPPER(short_name) = UPPER(?) OR UPPER(station_name) = UPPER(?)
+    """, (q, q))
     row = cur.fetchone()
     if row:
         return dict(row)
 
     # 3. Check alias list
-    cur.execute("SELECT * FROM stations")
+    cur.execute("""
+        SELECT station_code, short_name, station_name, aliases, line, dist_from_csmt_km
+        FROM stations
+    """)
     for r in cur.fetchall():
         aliases = [a.strip().upper() for a in r["aliases"].split(",")]
         if q.upper() in aliases:
             return dict(r)
 
     # 4. Substring fuzzy match
-    cur.execute("SELECT * FROM stations WHERE UPPER(short_name) LIKE UPPER(?) OR UPPER(station_name) LIKE UPPER(?)", (f"%{q}%", f"%{q}%"))
+    cur.execute("""
+        SELECT station_code, short_name, station_name, aliases, line, dist_from_csmt_km
+        FROM stations
+        WHERE UPPER(short_name) LIKE UPPER(?) OR UPPER(station_name) LIKE UPPER(?)
+    """, (f"%{q}%", f"%{q}%"))
     row = cur.fetchone()
     if row:
         return dict(row)

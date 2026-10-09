@@ -13,6 +13,8 @@ import argparse
 import sqlite3
 from contextlib import closing
 
+# Runtime-safe maintenance note: station data is treated as reference metadata; keep
+# facility lookups and station mapping behavior unchanged when updating this file.
 DB_PATH = os.path.join(os.path.dirname(__file__), "central_saathi.db")
 
 # Master Facilities & Layout Dictionary for Central Railway Mumbai Suburban Network

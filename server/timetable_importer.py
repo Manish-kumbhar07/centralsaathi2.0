@@ -11,6 +11,8 @@ import json
 import os
 from datetime import datetime
 
+# Runtime-safe maintenance note: importer logic should remain deterministic and
+# database-compatible; any schema or parsing edits must not affect seeded timetable data.
 DB_PATH = os.path.join(os.path.dirname(__file__), "central_saathi.db")
 
 MASTER_STATIONS = [

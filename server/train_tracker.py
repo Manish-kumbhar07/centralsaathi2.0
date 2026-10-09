@@ -27,10 +27,15 @@ def get_current_ist_time():
 
 def time_to_mins(t_str):
     """Converts HH:MM string to minutes since midnight."""
-    if not t_str:
-        return 0
-    parts = [int(p) for p in t_str.split(":")]
-    return parts[0] * 60 + parts[1]
+    if not isinstance(t_str, str):
+        raise ValueError("Time must be in HH:MM format")
+    parts = t_str.strip().split(":")
+    if len(parts) != 2 or any(not part.isdigit() for part in parts):
+        raise ValueError(f"Invalid time {t_str!r}; expected HH:MM")
+    hours, minutes = map(int, parts)
+    if not (0 <= hours < 24 and 0 <= minutes < 60):
+        raise ValueError(f"Invalid 24-hour time {t_str!r}")
+    return hours * 60 + minutes
 
 def mins_to_time(mins):
     """Converts minutes since midnight to HH:MM string."""

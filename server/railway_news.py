@@ -71,7 +71,12 @@ def check_route_for_alerts(origin_code, dest_code, travel_date=None):
     Returns smart alert object if affected.
     """
     with closing(get_connection()) as conn:
-        rows = conn.execute("SELECT * FROM railway_alerts WHERE is_active = 1").fetchall()
+        rows = conn.execute("""
+            SELECT title, alert_type, affected_stations, severity, impact, advice,
+                   source, start_time, end_time
+            FROM railway_alerts
+            WHERE is_active = 1
+        """).fetchall()
 
     origin_code = str(origin_code or "").strip().upper()
     dest_code = str(dest_code or "").strip().upper()

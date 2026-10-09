@@ -64,10 +64,12 @@ class RailwayAnalyticsEngine:
         conn = self._get_connection()
 
         # 1. Pandas DataFrame ingestion from SQLite
-        trains_df = pd.read_sql_query("SELECT * FROM trains", conn)
-        stations_df = pd.read_sql_query("SELECT * FROM stations", conn)
-        stops_df = pd.read_sql_query("SELECT * FROM train_stops", conn)
-        alerts_df = pd.read_sql_query("SELECT * FROM railway_alerts WHERE is_active = 1", conn)
+        trains_df = pd.read_sql_query(
+            "SELECT id, train_number, train_type, is_ac, cars FROM trains", conn
+        )
+        stations_df = pd.read_sql_query(
+            "SELECT station_code, short_name, dist_from_csmt_km FROM stations", conn
+        )
 
         # Ensure crowd_reports table exists
         conn.execute("""
@@ -82,7 +84,12 @@ class RailwayAnalyticsEngine:
             verified_count INTEGER DEFAULT 1
         );
         """)
-        crowd_df = pd.read_sql_query("SELECT * FROM crowd_reports", conn)
+        active_disruption_count = conn.execute(
+            "SELECT COUNT(*) FROM railway_alerts WHERE is_active = 1"
+        ).fetchone()[0]
+        crowd_report_count = conn.execute(
+            "SELECT COUNT(*) FROM crowd_reports"
+        ).fetchone()[0]
         conn.close()
 
         # 2. Data Cleaning & Transformation via Pandas
@@ -169,8 +176,8 @@ class RailwayAnalyticsEngine:
                 "average_speed_slow_kmh": avg_speed_slow,
                 "speed_standard_deviation": speed_variance_std,
                 "punctuality_percentage": punctuality_pct,
-                "active_disruptions": len(alerts_df),
-                "crowd_reports_logged": len(crowd_df),
+                "active_disruptions": active_disruption_count,
+                "crowd_reports_logged": crowd_report_count,
                 "median_delay_factor": p50,
                 "high_delay_percentile": p90,
                 "engine": "Pandas 1.5 + NumPy 1.24 + SQLite3"

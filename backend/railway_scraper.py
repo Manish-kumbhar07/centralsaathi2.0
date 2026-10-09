@@ -173,6 +173,7 @@ class RailwayScraper:
             is_active INTEGER DEFAULT 1
         );
         """)
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_railway_alerts_title ON railway_alerts(title);")
         conn.commit()
         conn.close()
 
@@ -341,20 +342,21 @@ class RailwayScraper:
         cur = conn.cursor()
 
         # Insert into scraped_advisories log
-        inserted_advisories = 0
-        for item in all_scraped:
-            cur.execute("""
+        cur.executemany("""
             INSERT INTO scraped_advisories (title, description, category, source_url, scraped_via, scraped_at, is_verified)
             VALUES (?, ?, ?, ?, ?, ?, 1)
             """, (
+            (
                 item["title"],
                 item["description"],
                 item["category"],
                 item.get("source_url", CR_PRESS_RELEASES_URL),
                 item.get("scraped_via", "REQUESTS"),
                 item.get("scraped_at", datetime.now().isoformat())
-            ))
-            inserted_advisories += 1
+            )
+            for item in all_scraped
+        ))
+        inserted_advisories = len(all_scraped)
 
         # Upsert verified alerts into railway_alerts table
         for alert in OFFICIAL_SUBURBAN_CIRCULARS:

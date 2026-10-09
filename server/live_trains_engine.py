@@ -224,6 +224,7 @@ def fetch_active_trains(query_time=None, limit=25):
     """
     Fetches real Central Railway trains active at the specified time or current IST time.
     """
+    limit = max(1, min(int(limit), 100))
     conn = get_db()
     cur = conn.cursor()
 

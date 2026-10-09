@@ -9,6 +9,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
+app.disable('x-powered-by');
 
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
@@ -41,6 +42,13 @@ app.post('/api/save-hero-image', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   try {
     const { imageData, imagePath, name } = req.body;
+
+    if (imageData !== undefined && (typeof imageData !== 'string' || !/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/i.test(imageData))) {
+      return res.status(400).json({ success: false, error: 'imageData must be a base64 PNG, JPEG, or WebP data URL.' });
+    }
+    if (imagePath !== undefined && (typeof imagePath !== 'string' || !imagePath.trim())) {
+      return res.status(400).json({ success: false, error: 'imagePath must be a non-empty string.' });
+    }
     
     if (imagePath) {
       savedHeroWallpaper = {
@@ -55,7 +63,7 @@ app.post('/api/save-hero-image', (req, res) => {
 
       // Try saving to disk if filesystem is writable (VPS/local dev), safe to skip on read-only Vercel
       try {
-        const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
+        const base64Data = imageData.replace(/^data:image\/(?:png|jpeg|webp);base64,/i, '');
         const buffer = Buffer.from(base64Data, 'base64');
         const assetsDir = path.join(__dirname, 'public', 'assets');
         if (!fs.existsSync(assetsDir)) {

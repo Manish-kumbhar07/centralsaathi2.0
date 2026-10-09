@@ -149,6 +149,9 @@ def init_db():
     )
     """)
 
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_stations_dist_km ON stations(dist_km)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_crowd_reports_station_recent ON crowd_reports(station_code, id DESC)")
+
     conn.commit()
 
     # Seed data if tables are empty

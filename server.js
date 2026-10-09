@@ -41,7 +41,7 @@ try {
 app.post('/api/save-hero-image', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   try {
-    const { imageData, imagePath, name } = req.body;
+    const { imageData, imagePath, name } = req.body || {};
 
     if (imageData !== undefined && (typeof imageData !== 'string' || !/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/i.test(imageData))) {
       return res.status(400).json({ success: false, error: 'imageData must be a base64 PNG, JPEG, or WebP data URL.' });

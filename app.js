@@ -30,6 +30,7 @@ let isSatelliteMode = true;
 // Active selected train & search state
 let selectedTrain = null;
 let currentSearchTrains = [];
+let selectedTrainIndex = 0;
 let currentServiceFilter = 'ALL';
 let currentOriginCode = 'TNA';
 let currentDestCode = 'CSMT';
@@ -2315,6 +2316,7 @@ function renderSearchResults(data, fromCode, toCode) {
   }
 
   // Set the primary selected train (first train departing from selected time)
+  selectedTrainIndex = 0;
   const initialTrain = trains[0] || data.recommended_journey;
   if (initialTrain) {
     setActiveSelectedTrain(initialTrain, fromCode, toCode);
@@ -2520,7 +2522,7 @@ window.refreshActiveTrainTelemetry = async function(manualTrigger = false) {
   }
 };
 
-function renderUpcomingTrains(trains, fromCode, toCode) {
+function renderUpcomingTrains(trains, fromCode, toCode, activeIdx = selectedTrainIndex) {
   const container = document.getElementById('moreTrainsList');
   const countEl = document.getElementById('moreOptionsCount');
   if (!container) return;
@@ -2528,8 +2530,8 @@ function renderUpcomingTrains(trains, fromCode, toCode) {
   const plannerTime = document.getElementById('plannerTimeInput')?.value || '';
   if (countEl) {
     countEl.textContent = plannerTime 
-      ? `${trains.length} trains from ${plannerTime} onwards · Click any train to select` 
-      : `${trains.length} verified services · Click any train to select`;
+      ? `${trains.length} trains from ${plannerTime} onwards · Click Select to activate service` 
+      : `${trains.length} verified services · Click Select to activate service`;
   }
 
   if (trains.length === 0) {
@@ -2539,6 +2541,7 @@ function renderUpcomingTrains(trains, fromCode, toCode) {
 
   let html = '';
   trains.forEach((t, idx) => {
+    const isSelected = (idx === activeIdx);
     const isAc = t.is_ac;
     const isFast = t.is_fast || t.train_type === 'FAST';
     const typeLabel = isAc ? 'AC Local' : (isFast ? 'Fast Local' : 'Slow Local');
@@ -2560,11 +2563,11 @@ function renderUpcomingTrains(trains, fromCode, toCode) {
 
     html += `
       <div 
-        class="py-2.5 flex items-center justify-between group hover:bg-slate-50 rounded-xl px-2 transition-colors cursor-pointer"
+        class="py-2.5 flex items-center justify-between group rounded-xl px-2.5 transition-all cursor-pointer border ${isSelected ? 'bg-emerald-50/70 border-emerald-300 shadow-2xs' : 'hover:bg-slate-50 border-transparent'}"
         onclick="pickTrainFromList(${idx}, '${fromCode}', '${toCode}')"
       >
         <div class="flex items-center gap-3">
-          <div class="text-base font-extrabold text-slate-900 w-16">${t.departure_time}</div>
+          <div class="text-base font-extrabold ${isSelected ? 'text-emerald-950 font-black' : 'text-slate-900'} w-16">${t.departure_time}</div>
           <div>
             <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5 flex-wrap">
               <span>${t.train_name}</span>
@@ -2588,10 +2591,20 @@ function renderUpcomingTrains(trains, fromCode, toCode) {
         </div>
 
         <div class="flex items-center gap-1.5 shrink-0">
-          <span class="text-[11px] font-bold text-slate-700 bg-slate-100 group-hover:bg-emerald-50 group-hover:text-emerald-900 group-hover:border-emerald-200 border border-slate-200 px-2.5 py-1 rounded-xl transition-all flex items-center gap-1">
-            <span>Select</span>
-            <span>➔</span>
-          </span>
+          ${isSelected 
+            ? `<span class="text-[11px] font-extrabold text-white bg-emerald-700 px-3 py-1.5 rounded-xl flex items-center gap-1 shadow-xs">
+                 <span>✓ Active Service</span>
+               </span>`
+            : `<button 
+                 type="button" 
+                 class="select-train-btn text-[11px] font-bold text-slate-700 bg-slate-100 hover:bg-[#064e3b] hover:text-white border border-slate-200 px-3 py-1.5 rounded-xl transition-all flex items-center gap-1 cursor-pointer"
+                 onclick="event.stopPropagation(); pickTrainFromList(${idx}, '${fromCode}', '${toCode}')"
+                 title="Select this train service"
+               >
+                 <span>Select</span>
+                 <span>➔</span>
+               </button>`
+          }
         </div>
       </div>
     `;
@@ -2601,6 +2614,7 @@ function renderUpcomingTrains(trains, fromCode, toCode) {
 }
 
 window.pickTrainFromList = function(idx, fromCode, toCode) {
+  selectedTrainIndex = idx;
   const train = currentSearchTrains[idx];
   if (train) {
     setActiveSelectedTrain(train, fromCode, toCode);
@@ -2608,6 +2622,29 @@ window.pickTrainFromList = function(idx, fromCode, toCode) {
     renderRouteTimeline(stops, fromCode, toCode);
     updateMapActiveRoute(fromCode, toCode, stops, train);
     populateRouteStationsInSpeedometer(stops, toCode);
+
+    // Re-render upcoming trains so the selected train is highlighted with active state
+    renderUpcomingTrains(currentSearchTrains, fromCode, toCode, idx);
+
+    // Smoothly scroll and move commuter directly to the Active Selected Services card
+    const activeCard = document.getElementById('selectedActiveTrainCard');
+    if (activeCard) {
+      const header = document.querySelector('header');
+      const navOffset = (header ? header.offsetHeight : 70) + 16;
+      const cardTop = activeCard.getBoundingClientRect().top + window.pageYOffset - navOffset;
+      window.scrollTo({
+        top: Math.max(0, cardTop),
+        behavior: 'smooth'
+      });
+
+      // Visual feedback: vibrant emerald focus ring animation
+      activeCard.classList.remove('ring-4', 'ring-emerald-500', 'ring-offset-2', 'ring-emerald-400');
+      void activeCard.offsetWidth; // Trigger reflow for reliable animation
+      activeCard.classList.add('ring-4', 'ring-emerald-500', 'ring-offset-2', 'transition-all', 'duration-300');
+      setTimeout(() => {
+        activeCard.classList.remove('ring-4', 'ring-emerald-500', 'ring-offset-2');
+      }, 2200);
+    }
   }
 };
 
@@ -3410,85 +3447,18 @@ window.broadcastEmergencyLocation = function() {
 };
 
 // ==========================================
-// 9. COMMUTER SUITE: AMENITIES, FARES & DOORS
+// 9. COMMUTER SUITE: FARES, LUGGAGE, UTS, SAFETY & CHARTER
 // ==========================================
 function renderAmenitiesDirectory() {
-  const grid = document.getElementById('stationAmenitiesGrid');
-  if (!grid || allStations.length === 0) return;
-
-  let html = '';
-  allStations.forEach(s => {
-    const am = s.amenities || { escalators: 0, lifts: 0, water_atms: 2, atvm_kiosks: 3, fobs: 2, medical_post: 'Station Master' };
-    html += `
-      <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl">
-        <div class="flex items-center justify-between mb-1.5">
-          <div class="text-xs font-black text-slate-900">${s.name} (${s.code})</div>
-          <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-white text-slate-700 border border-slate-200">PF ${s.platforms || 2}</span>
-        </div>
-        <div class="grid grid-cols-3 gap-1 text-[10px] text-slate-500 mb-1.5">
-          <div>Escalators: <strong class="text-slate-700">${am.escalators}</strong></div>
-          <div>Lifts: <strong class="text-slate-700">${am.lifts}</strong></div>
-          <div>FOBs: <strong class="text-slate-700">${am.fobs}</strong></div>
-          <div>ATVMs: <strong class="text-slate-700">${am.atvm_kiosks}</strong></div>
-          <div>Water ATM: <strong class="text-slate-700">${am.water_atms}</strong></div>
-          <div>Cloak: <strong class="text-slate-700">${am.cloak_room ? 'Yes' : 'No'}</strong></div>
-        </div>
-        <div class="text-[10px] text-emerald-800 font-semibold truncate">Emergency: ${am.medical_post}</div>
-      </div>
-    `;
-  });
-
-  grid.innerHTML = html;
+  // Overlapping station amenities are now natively hosted inside "Know Your Station"
 }
 
 function renderDoorSideDirectory() {
-  const grid = document.getElementById('doorSideDirectoryGrid');
-  if (!grid || allStations.length === 0) return;
-
-  let html = '';
-  allStations.forEach(s => {
-    const door = s.door_side || 'Left';
-    const isBoth = door.includes('&');
-    const badgeColor = isBoth ? 'bg-purple-50 text-purple-700 border-purple-200' : (door === 'Right' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-slate-100 text-slate-700 border-slate-200');
-
-    html += `
-      <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
-        <div>
-          <div class="text-xs font-bold text-slate-900">${s.name}</div>
-          <div class="text-[10px] text-slate-400">${s.code} · PF ${s.platforms || 2}</div>
-        </div>
-        <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${badgeColor}">${door}</span>
-      </div>
-    `;
-  });
-
-  grid.innerHTML = html;
+  // Platform door sides are now interactively displayed in "Know Your Station" & Timetables
 }
 
 async function loadCoachLayout() {
-  const grid = document.getElementById('coachRakeGrid');
-  if (!grid) return;
-
-  try {
-    const res = await fetch('/api/coach-layout');
-    const data = await res.json();
-    const coaches = data.twelve_car || [];
-
-    let html = '';
-    coaches.forEach(c => {
-      html += `
-        <div class="p-3 rounded-2xl border border-slate-200 text-center flex flex-col justify-between" style="background-color: ${c.color}; color: ${c.text_color};">
-          <div class="text-[10px] font-black uppercase tracking-wider opacity-80">Coach #${c.coach_num}</div>
-          <div class="text-xs font-black my-1">${c.type}</div>
-          <div class="text-[9px] opacity-75 leading-tight">${c.label}</div>
-        </div>
-      `;
-    });
-
-    grid.innerHTML = html;
-  } catch (err) {
-    console.warn('Coach layout error:', err);
-  }
+  // Retained for coach reference data
 }
 
 function populateToolDropdowns() {
@@ -3500,12 +3470,12 @@ function populateToolDropdowns() {
 
   originSelect.innerHTML = '';
   destSelect.innerHTML = '';
-  alarmSelect.innerHTML = '';
+  if (alarmSelect) alarmSelect.innerHTML = '';
 
   allStations.forEach(s => {
     originSelect.add(new Option(`${s.name} (${s.code})`, s.code, false, s.code === 'TNA'));
     destSelect.add(new Option(`${s.name} (${s.code})`, s.code, false, s.code === 'CSMT'));
-    alarmSelect.add(new Option(`${s.name} (${s.code})`, s.code, false, s.code === 'DR'));
+    if (alarmSelect) alarmSelect.add(new Option(`${s.name} (${s.code})`, s.code, false, s.code === 'DR'));
   });
 
   originSelect.addEventListener('change', calculateCustomFares);
@@ -3522,29 +3492,165 @@ async function calculateCustomFares() {
   try {
     const res = await fetch(`/api/fare?origin=${from}&destination=${to}`);
     const data = await res.json();
+    const dist = data.distance_km || 34.0;
     const f = data.fares || { second_class: 10, first_class: 105, ac_local: 135 };
     const sp = data.season_pass || { monthly_second: 200, monthly_first: 650, monthly_ac: 1400 };
 
+    const fromStn = allStations.find(s => s.code === from);
+    const toStn = allStations.find(s => s.code === to);
+
+    // Quarterly (2.7x), Half-Yearly (5.4x), Annual (10.8x)
+    const qSec = Math.round(sp.monthly_second * 2.7);
+    const qFirst = Math.round(sp.monthly_first * 2.7);
+    const qAc = Math.round(sp.monthly_ac * 2.7);
+    const hyFirst = Math.round(sp.monthly_first * 5.4);
+    const yFirst = Math.round(sp.monthly_first * 10.8);
+
+    // Monthly Savings calculation (22 work days × 2 trips = 44 single trips)
+    const dailyReturnIClass = f.first_class * 2;
+    const monthlyDailyCost = dailyReturnIClass * 22;
+    const monthlyPassSavings = Math.max(0, monthlyDailyCost - sp.monthly_first);
+    const tripsToBreakeven = Math.ceil(sp.monthly_first / f.first_class);
+
     grid.innerHTML = `
-      <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl">
-        <div class="text-[10px] font-bold text-slate-400 uppercase">II Class Single</div>
-        <div class="text-xl font-black text-slate-900 mt-1">₹${f.second_class}</div>
-        <div class="text-[10px] text-slate-400 mt-0.5">Ordinary EMU</div>
+      <!-- Route distance badge -->
+      <div class="flex flex-wrap items-center justify-between gap-2 p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs">
+        <div class="font-extrabold text-slate-800 flex items-center gap-1.5">
+          <span>${fromStn?.name || from}</span>
+          <span class="text-slate-400">➔</span>
+          <span>${toStn?.name || to}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Distance: ${dist} km</span>
+          <span class="text-[11px] font-semibold text-slate-500">Central Main Line</span>
+        </div>
       </div>
-      <div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl">
-        <div class="text-[10px] font-bold text-amber-800 uppercase">I Class Single</div>
-        <div class="text-xl font-black text-amber-800 mt-1">₹${f.first_class}</div>
-        <div class="text-[10px] text-amber-600 mt-0.5">First class coach</div>
+
+      <!-- Single & Daily Return Journey Rates -->
+      <div>
+        <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Single Journey &amp; Return Fares</h4>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <!-- Second Class -->
+          <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 bg-slate-200 text-slate-800 rounded">II Class Ordinary</span>
+              <span class="text-[10px] text-slate-400">Non-AC</span>
+            </div>
+            <div class="mt-2.5 flex items-baseline gap-2">
+              <span class="text-2xl font-black text-slate-900">₹${f.second_class}</span>
+              <span class="text-xs text-slate-500 font-semibold">Single</span>
+            </div>
+            <div class="mt-1 pt-1.5 border-t border-slate-200 flex justify-between text-xs text-slate-600">
+              <span>Daily Return Ticket:</span>
+              <strong class="text-slate-900 font-bold">₹${f.second_class * 2}</strong>
+            </div>
+          </div>
+
+          <!-- First Class -->
+          <div class="p-4 bg-amber-50/70 border border-amber-200 rounded-2xl">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 bg-amber-200 text-amber-900 rounded">I Class Suburban</span>
+              <span class="text-[10px] text-amber-700 font-semibold">Cushioned Seats</span>
+            </div>
+            <div class="mt-2.5 flex items-baseline gap-2">
+              <span class="text-2xl font-black text-amber-900">₹${f.first_class}</span>
+              <span class="text-xs text-amber-700 font-semibold">Single</span>
+            </div>
+            <div class="mt-1 pt-1.5 border-t border-amber-200/60 flex justify-between text-xs text-amber-900">
+              <span>Daily Return Ticket:</span>
+              <strong class="font-bold">₹${f.first_class * 2}</strong>
+            </div>
+          </div>
+
+          <!-- AC Local -->
+          <div class="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 bg-emerald-200 text-emerald-900 rounded">AC Suburban EMU</span>
+              <span class="text-[10px] text-emerald-700 font-semibold">Auto Vestibule</span>
+            </div>
+            <div class="mt-2.5 flex items-baseline gap-2">
+              <span class="text-2xl font-black text-emerald-950">₹${f.ac_local}</span>
+              <span class="text-xs text-emerald-700 font-semibold">Single</span>
+            </div>
+            <div class="mt-1 pt-1.5 border-t border-emerald-200/60 flex justify-between text-xs text-emerald-900">
+              <span>Return Ticket:</span>
+              <strong class="font-bold">₹${Math.round(f.ac_local * 1.9)}</strong>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl">
-        <div class="text-[10px] font-bold text-emerald-800 uppercase">AC Local Single</div>
-        <div class="text-xl font-black text-emerald-800 mt-1">₹${f.ac_local}</div>
-        <div class="text-[10px] text-emerald-600 mt-0.5">Automatic vestibule</div>
+
+      <!-- Unlimited Suburban Season Pass Matrix -->
+      <div>
+        <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Unlimited Suburban Season Pass (MST &amp; QST)</h4>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <!-- Second Class Pass -->
+          <div class="p-4 bg-white border border-slate-200 rounded-2xl shadow-2xs">
+            <div class="text-[10px] font-bold text-slate-500 uppercase">Second Class Season Pass</div>
+            <div class="mt-2 flex items-baseline justify-between">
+              <div>
+                <span class="text-xs text-slate-400">Monthly:</span>
+                <span class="text-lg font-black text-slate-900 ml-1">₹${sp.monthly_second}</span>
+              </div>
+              <div>
+                <span class="text-xs text-slate-400">Quarterly:</span>
+                <span class="text-sm font-bold text-slate-800 ml-1">₹${qSec}</span>
+              </div>
+            </div>
+            <p class="text-[10px] text-slate-400 mt-2">Unlimited travel across origin &amp; destination</p>
+          </div>
+
+          <!-- First Class Pass -->
+          <div class="p-4 bg-amber-50/40 border border-amber-200/80 rounded-2xl shadow-2xs">
+            <div class="text-[10px] font-bold text-amber-800 uppercase">First Class Season Pass</div>
+            <div class="mt-2 flex items-baseline justify-between">
+              <div>
+                <span class="text-xs text-amber-700">Monthly:</span>
+                <span class="text-lg font-black text-amber-950 ml-1">₹${sp.monthly_first}</span>
+              </div>
+              <div>
+                <span class="text-xs text-amber-700">Quarterly:</span>
+                <span class="text-sm font-bold text-amber-900 ml-1">₹${qFirst}</span>
+              </div>
+            </div>
+            <div class="mt-1 pt-1 text-[10px] text-amber-800 flex justify-between border-t border-amber-100">
+              <span>Half-Yearly: ₹${hyFirst}</span>
+              <span>Yearly: ₹${yFirst}</span>
+            </div>
+          </div>
+
+          <!-- AC Local Pass -->
+          <div class="p-4 bg-emerald-50/40 border border-emerald-200/80 rounded-2xl shadow-2xs">
+            <div class="text-[10px] font-bold text-emerald-800 uppercase">AC Local Season Pass</div>
+            <div class="mt-2 flex items-baseline justify-between">
+              <div>
+                <span class="text-xs text-emerald-700">Monthly:</span>
+                <span class="text-lg font-black text-emerald-950 ml-1">₹${sp.monthly_ac}</span>
+              </div>
+              <div>
+                <span class="text-xs text-emerald-700">Quarterly:</span>
+                <span class="text-sm font-bold text-emerald-900 ml-1">₹${qAc}</span>
+              </div>
+            </div>
+            <p class="text-[10px] text-emerald-700 mt-2">Valid in all AC &amp; non-AC First Class rakes</p>
+          </div>
+        </div>
       </div>
-      <div class="p-3 bg-blue-50 border border-blue-200 rounded-2xl">
-        <div class="text-[10px] font-bold text-blue-800 uppercase">Monthly Season Pass</div>
-        <div class="text-xl font-black text-blue-800 mt-1">₹${sp.monthly_first || 650}</div>
-        <div class="text-[10px] text-blue-600 mt-0.5">Unlimited monthly (I Class)</div>
+
+      <!-- Cost Savings Meter Banner -->
+      <div class="p-4 bg-gradient-to-r from-emerald-900 via-teal-900 to-[#07131e] text-white rounded-2xl shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div class="text-[10px] uppercase font-extrabold tracking-wider text-emerald-300">Commuter Cost-Benefit Analysis</div>
+          <div class="text-sm font-black mt-0.5">
+            A First Class Season Pass saves ~₹${monthlyPassSavings.toLocaleString('en-IN')} every month
+          </div>
+          <p class="text-xs text-slate-300 mt-0.5">
+            Daily return tickets cost ₹${monthlyDailyCost.toLocaleString('en-IN')}/mo (22 working days). Pass breaks even in only <strong>${tripsToBreakeven} single trips</strong>!
+          </p>
+        </div>
+        <button onclick="switchAppTab('my-personal')" class="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl text-xs font-bold transition-all shrink-0">
+          Save in Pass Wallet ➔
+        </button>
       </div>
     `;
   } catch (err) {

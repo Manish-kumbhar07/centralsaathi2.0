@@ -545,6 +545,27 @@ app.get('/api/config', (req, res) => {
   });
 });
 
+// Lightweight health check for local hosting and deployment monitors.
+app.get('/api/health', (req, res) => {
+  const stationsLoaded = Array.isArray(rawData.stations) && rawData.stations.length > 0;
+  const trainsLoaded = Array.isArray(rawData.trains) && rawData.trains.length > 0;
+  const healthy = stationsLoaded && trainsLoaded;
+
+  res.setHeader('Cache-Control', 'no-store');
+  return res.status(healthy ? 200 : 503).json({
+    success: healthy,
+    status: healthy ? 'ok' : 'degraded',
+    service: 'CentralSaathi API',
+    uptime_seconds: Math.floor(process.uptime()),
+    timetable: {
+      stations: Array.isArray(rawData.stations) ? rawData.stations.length : 0,
+      trains: Array.isArray(rawData.trains) ? rawData.trains.length : 0,
+      train_stops: Array.isArray(rawData.train_stops) ? rawData.train_stops.length : 0,
+    },
+    checked_at: new Date().toISOString(),
+  });
+});
+
 // ==========================================
 // 1. API: STATIONS & PYTHON FACILITIES ENGINE
 // ==========================================

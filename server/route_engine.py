@@ -19,6 +19,9 @@ from datetime import datetime, date
 from railway_db import get_connection
 from railway_news import check_route_for_alerts
 
+# Runtime-safe maintenance note: these database-backed helpers are intentionally kept
+# behavior-stable. Any changes here should preserve route calculation and alert logic.
+
 def parse_time_mins(time_str):
     if not isinstance(time_str, str):
         raise ValueError("Time must be in HH:MM format")

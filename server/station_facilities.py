@@ -689,7 +689,13 @@ def get_station_facilities(station_code):
             with closing(sqlite3.connect(DB_PATH, timeout=10)) as conn:
                 conn.row_factory = sqlite3.Row
                 row = conn.execute(
-                    "SELECT * FROM stations WHERE UPPER(station_code) = ?", (code,)
+                    """
+                    SELECT station_code, station_name, marathi_name, dist_from_csmt_km,
+                           is_fast_stop, platforms
+                    FROM stations
+                    WHERE UPPER(station_code) = ?
+                    """,
+                    (code,)
                 ).fetchone()
             if row:
                 fac = generate_default_facilities(
@@ -718,7 +724,9 @@ def list_all_stations_facilities():
         try:
             with closing(sqlite3.connect(DB_PATH, timeout=10)) as conn:
                 conn.row_factory = sqlite3.Row
-                rows = conn.execute("SELECT * FROM stations ORDER BY dist_from_csmt_km ASC").fetchall()
+                rows = conn.execute(
+                    "SELECT station_code FROM stations ORDER BY dist_from_csmt_km ASC"
+                ).fetchall()
             for r in rows:
                 code = r["station_code"]
                 fac = get_station_facilities(code)
@@ -748,4 +756,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

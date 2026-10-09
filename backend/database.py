@@ -265,19 +265,20 @@ def seed_connections(cursor: sqlite3.Cursor):
     if os.path.exists(CONNECTIONS_JSON):
         with open(CONNECTIONS_JSON, "r", encoding="utf-8") as f:
             connections = json.load(f)
-        for c in connections:
-            tracks_str = json.dumps(c.get("tracks", []))
-            cursor.execute("""
+        cursor.executemany("""
             INSERT INTO connections (from_code, to_code, dist_km, slow_mins, fast_mins, tracks)
             VALUES (?, ?, ?, ?, ?, ?)
             """, (
+            (
                 c.get("from", "").upper(),
                 c.get("to", "").upper(),
                 float(c.get("dist_km", 0.0)),
                 int(c.get("slow_mins", 0)),
                 int(c.get("fast_mins")) if c.get("fast_mins") is not None else None,
-                tracks_str
-            ))
+                json.dumps(c.get("tracks", []))
+            )
+            for c in connections
+        ))
 
 def seed_trains_and_stops(cursor: sqlite3.Cursor):
     """Seeds train schedules and stops from official timetable JSON."""

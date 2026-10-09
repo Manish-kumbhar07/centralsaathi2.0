@@ -58,7 +58,15 @@ def generate_telemetry_for_train(train_number, query_time_str=None):
     time_str = query_time_str or ist_now.strftime("%H:%M:%S")
     
     # Deterministic pseudo-randomness based on train number & minute so pings remain consistent during a minute
-    seed_val = (int(str(train_number).replace("#", "").strip() or "95112") * 17) + ist_now.minute
+    try:
+        query_minute = int(time_str.split(":")[1])
+    except (IndexError, TypeError, ValueError):
+        query_minute = ist_now.minute
+    try:
+        train_seed = int(str(train_number).replace("#", "").strip() or "95112")
+    except ValueError:
+        train_seed = sum(ord(char) for char in str(train_number))
+    seed_val = (train_seed * 17) + query_minute
     rng = random.Random(seed_val)
     
     # Status distribution: 75% On Time, 20% Delayed by 5m, 5% Cancelled

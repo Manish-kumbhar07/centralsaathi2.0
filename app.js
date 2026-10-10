@@ -115,9 +115,10 @@ function setupStationAutocomplete(inputId, dropdownId) {
       return;
     }
 
-    if (event.key === 'Enter' && !dropdown.classList.contains('hidden') && activeIndex !== -1) {
+    const enterIndex = activeIndex !== -1 ? activeIndex : (options.length === 1 ? 0 : -1);
+    if (event.key === 'Enter' && !dropdown.classList.contains('hidden') && enterIndex !== -1) {
       event.preventDefault();
-      options[activeIndex].click();
+      options[enterIndex].click();
     }
   });
 

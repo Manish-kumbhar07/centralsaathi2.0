@@ -44,15 +44,19 @@ const STATION_SEARCH_ALIASES = {
   MMCT: ['Bombay Central'],
 };
 
+function getStationSearchFields(station) {
+  return [station.code, station.name, station.marathi_name, ...(STATION_SEARCH_ALIASES[station.code] || [])]
+    .map(normalizeStationSearchText)
+    .filter(Boolean);
+}
+
 function searchStations(query, limit) {
   const normalizedQuery = normalizeStationSearchText(query);
   if (!normalizedQuery) return allStations.slice(0, limit);
 
   return allStations
     .map((station, index) => {
-      const fields = [station.code, station.name, station.marathi_name, ...(STATION_SEARCH_ALIASES[station.code] || [])]
-        .map(normalizeStationSearchText)
-        .filter(Boolean);
+      const fields = getStationSearchFields(station);
       const exactRank = fields.some(field => field === normalizedQuery) ? 0 : null;
       const prefixRank = fields.some(field => field.startsWith(normalizedQuery)) ? 1 : null;
       const containsRank = fields.some(field => field.includes(normalizedQuery)) ? 2 : null;
@@ -99,6 +103,14 @@ function setupStationAutocomplete(inputId, dropdownId) {
   input.addEventListener('keydown', (event) => {
     const options = [...dropdown.querySelectorAll('[role="option"]:not([aria-disabled="true"])')];
     const activeIndex = options.findIndex(option => option.getAttribute('aria-selected') === 'true');
+    const query = normalizeStationSearchText(input.value);
+    const exactIndexes = options
+      .map((option, index) => ({ option, index }))
+      .filter(({ option }) => {
+        const station = allStations.find(item => item.code === option.dataset.stationCode);
+        return station && getStationSearchFields(station).includes(query);
+      })
+      .map(({ index }) => index);
 
     if (event.key === 'Escape' && !dropdown.classList.contains('hidden')) {
       event.preventDefault();
@@ -122,7 +134,9 @@ function setupStationAutocomplete(inputId, dropdownId) {
       return;
     }
 
-    const enterIndex = activeIndex !== -1 ? activeIndex : (options.length === 1 ? 0 : -1);
+    const enterIndex = activeIndex !== -1
+      ? activeIndex
+      : (options.length === 1 ? 0 : (exactIndexes.length === 1 ? exactIndexes[0] : -1));
     if (event.key === 'Enter' && !dropdown.classList.contains('hidden') && enterIndex !== -1) {
       event.preventDefault();
       options[enterIndex].click();
@@ -1464,7 +1478,7 @@ window.filterMapStationSearch = function(query) {
     let html = '<div class="p-2 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 flex items-center justify-between"><span>Central Railway Stations</span><span class="text-rose-700">Click to Explore</span></div>';
     curated.forEach(s => {
       html += `
-        <div id="station-option-map-${s.code}" role="option" aria-selected="false"
+        <div id="station-option-map-${s.code}" data-station-code="${s.code}" role="option" aria-selected="false"
           onclick="selectStationFromMapSearch('${s.code}')" 
           class="p-2.5 hover:bg-rose-50 cursor-pointer flex items-center justify-between transition-colors"
         >
@@ -1492,7 +1506,7 @@ window.filterMapStationSearch = function(query) {
   let html = '';
   matches.forEach(s => {
     html += `
-      <div id="station-option-map-${s.code}" role="option" aria-selected="false"
+      <div id="station-option-map-${s.code}" data-station-code="${s.code}" role="option" aria-selected="false"
         onclick="selectStationFromMapSearch('${s.code}')" 
         class="p-2.5 hover:bg-emerald-50 cursor-pointer flex items-center justify-between transition-colors"
       >
@@ -2148,7 +2162,7 @@ function filterHeroDropdown(type, query) {
   let html = '';
   matched.forEach(s => {
     html += `
-      <div id="station-option-hero-${type}-${s.code}" role="option" aria-selected="false"
+      <div id="station-option-hero-${type}-${s.code}" data-station-code="${s.code}" role="option" aria-selected="false"
         class="p-2.5 hover:bg-slate-50 cursor-pointer flex items-center justify-between transition-colors"
         onclick="selectHeroStation('${type}', '${s.code}')"
       >
@@ -2305,7 +2319,7 @@ function filterStationDropdown(type, query) {
     const fastTag = s.is_fast ? `<span class="text-[9px] text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded font-bold">Fast</span>` : '';
 
     html += `
-      <div id="station-option-planner-${type}-${s.code}" role="option" aria-selected="false"
+      <div id="station-option-planner-${type}-${s.code}" data-station-code="${s.code}" role="option" aria-selected="false"
         class="p-2.5 hover:bg-slate-50 cursor-pointer flex items-center justify-between transition-colors"
         onclick="selectStation('${type}', '${s.code}')"
       >

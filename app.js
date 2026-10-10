@@ -84,6 +84,7 @@ function setupStationAutocomplete(inputId, dropdownId) {
     if (!expanded) input.removeAttribute('aria-activedescendant');
   };
   new MutationObserver(syncExpanded).observe(dropdown, { attributes: true, attributeFilter: ['class'] });
+  input.addEventListener('input', () => input.removeAttribute('aria-activedescendant'));
 
   const activateOption = (option) => {
     dropdown.querySelectorAll('[role="option"]').forEach(item => {

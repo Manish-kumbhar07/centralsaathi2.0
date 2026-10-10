@@ -43,7 +43,7 @@ The project models the Central Line as a **network of stations (nodes) and rail 
 | **Backend** | Manish, Jayesh | Core Python logic: timetable engine, analytics, database layer, scrapers |
 | **API** | Manish | REST endpoints and API gateway |
 | **Server** | Jayesh, Arnav | Server runtime, live tracking engines, deployment config |
-| **Data** | Viraj | Station/connection datasets, timetable data, databases, importer and validator |
+| **Data** | Viraj,Arnav| Station/connection datasets, timetable data, databases, importer and validator |
 | **Frontend** | Manish | User interface, client-side logic, and assets |
 
 ---
@@ -90,7 +90,7 @@ The project models the Central Line as a **network of stations (nodes) and rail 
 | `server/station_facilities.py` | Station facilities and platform layout engine |
 | `server/railway_db.py` | SQLite relational schema and DB engine |
 
-### Data: Viraj
+### Data: Viraj and Arnav
 
 | File | Purpose |
 |---|---|
@@ -122,8 +122,8 @@ centralsaathi2.0/
 ├── api/                  # API entry point            (Manish)
 ├── backend/              # Backend logic + Flask API  (Manish, Jayesh)
 ├── server/               # Server engines             (Jayesh, Arnav)
-│   └── data/             # Timetable data             (Viraj)
-├── data/                 # Station & connection data  (Viraj)
+│   └── data/             # Timetable data             (Viraj,Arnav)
+├── data/                 # Station & connection data  (Viraj,Arnav)
 ├── public/assets/        # Images and SVGs            (Manish)
 ├── central_saathi_project/  # Django scaffold         (Backend)
 ├── index.html            # Frontend UI                (Manish)
@@ -175,7 +175,7 @@ Suggested commit prefixes so history shows who did what:
 - `backend:` for Manish and Jayesh
 - `api:` for Manish
 - `server:` for Jayesh and Arnav
-- `data:` for Viraj
+- `data:` for Viraj and Arnav
 - `frontend:` for Manish
 
 ---
@@ -186,5 +186,5 @@ Suggested commit prefixes so history shows who did what:
 |---|---|
 | Manish | Backend, API, Frontend |
 | Jayesh | Backend, Server |
-| Arnav | Server |
+| Arnav | Server , Data |
 | Viraj | Data |

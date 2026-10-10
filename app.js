@@ -2038,9 +2038,15 @@ function setupHeroEvents() {
     heroTime.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   }
 
-  heroFrom?.addEventListener('input', (e) => filterHeroDropdown('origin', e.target.value));
+  heroFrom?.addEventListener('input', (e) => {
+    delete e.target.dataset.code;
+    filterHeroDropdown('origin', e.target.value);
+  });
   heroFrom?.addEventListener('focus', (e) => filterHeroDropdown('origin', e.target.value));
-  heroTo?.addEventListener('input', (e) => filterHeroDropdown('dest', e.target.value));
+  heroTo?.addEventListener('input', (e) => {
+    delete e.target.dataset.code;
+    filterHeroDropdown('dest', e.target.value);
+  });
   heroTo?.addEventListener('focus', (e) => filterHeroDropdown('dest', e.target.value));
 
   document.addEventListener('click', (e) => {
@@ -2149,9 +2155,15 @@ function setupPlannerEvents() {
     plannerTime.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   }
 
-  originInput?.addEventListener('input', (e) => filterStationDropdown('origin', e.target.value));
+  originInput?.addEventListener('input', (e) => {
+    delete e.target.dataset.code;
+    filterStationDropdown('origin', e.target.value);
+  });
   originInput?.addEventListener('focus', (e) => filterStationDropdown('origin', e.target.value));
-  destInput?.addEventListener('input', (e) => filterStationDropdown('dest', e.target.value));
+  destInput?.addEventListener('input', (e) => {
+    delete e.target.dataset.code;
+    filterStationDropdown('dest', e.target.value);
+  });
   destInput?.addEventListener('focus', (e) => filterStationDropdown('dest', e.target.value));
 
   document.addEventListener('click', (e) => {

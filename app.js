@@ -106,7 +106,7 @@ function setupStationAutocomplete(inputId, dropdownId) {
       return;
     }
 
-    if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && options.length) {
+    if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && options.length && !dropdown.classList.contains('hidden')) {
       event.preventDefault();
       const direction = event.key === 'ArrowDown' ? 1 : -1;
       const nextIndex = activeIndex === -1

@@ -1,15 +1,19 @@
 {
-  "name": "react-example",
+  "name": "central-saathi",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "node server.js",
-    "build": "node -e 'console.log(\"Build successful: Pure Python, Flask, SQLite, Pandas, NumPy, HTML5 & JavaScript\")'",
+    "build": "node --check server.js && node --check api/index.js && node --check app.js",
     "start": "node server.js",
     "preview": "node server.js",
     "lint": "node -e 'console.log(\"Lint passed: Zero TypeScript, Zero React\")'"
   },
+  "engines": {
+    "node": ">=20.19.0 <23"
+  },
+  "packageManager": "npm@10.9.3",
   "dependencies": {
     "@google/genai": "^2.4.0",
     "@tailwindcss/vite": "^4.1.14",

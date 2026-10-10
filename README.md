@@ -148,6 +148,27 @@ cp .env.example .env      # add GEMINI_API_KEY if you want the AI assistant
 npm start                 # runs node server.js
 ```
 
+### Vercel deployment
+
+This repository deploys the Node/Express application in `api/index.js`; the
+Python and Django files are local-development/standalone components and are
+not invoked by the Vercel Node function. The function uses the bundled
+timetable JSON and JavaScript fallbacks, so it does not rely on a writable
+SQLite database or a persistent server process.
+
+- Framework Preset: **Other**
+- Root Directory: repository root (`centralsaathi2.0` when configuring this
+  nested repository from its parent)
+- Install Command: `npm install`
+- Build Command: `npm run build`
+- Output Directory: `.`
+- Environment variables: `GEMINI_API_KEY` and optional
+  `GOOGLE_MAPS_API_KEY` (the latter must be restricted to the deployment's
+  HTTP referrers because it is a browser Maps key).
+
+Use Node.js 20.19+ (Node 22 is supported). Do not configure a Procfile or a
+Python/Django framework preset for this deployment.
+
 ### Flask backend API
 ```bash
 pip install flask flask-cors pandas numpy requests beautifulsoup4

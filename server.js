@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
-import { spawnSync, execSync } from 'child_process';
+import { spawnSync } from 'child_process';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -10,6 +10,9 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 const PYTHON_COMMAND = process.env.PYTHON_COMMAND || (process.platform === 'win32' ? 'python' : 'python3');
+// Vercel deploys this as a Node function. Python engines remain available for
+// local development, while production uses the data-backed JavaScript fallbacks.
+const RUN_PYTHON_SUBPROCESSES = !process.env.VERCEL && process.env.ENABLE_PYTHON_SUBPROCESSES !== 'false';
 app.disable('x-powered-by');
 
 app.use(express.json({ limit: '15mb' }));
@@ -538,7 +541,7 @@ function calculateFares(distKm) {
 app.get('/api/config', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   return res.json({
-    googleMapsApiKey: process.env.VITE_GOOGLE_MAPS_API_KEY || '',
+    googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || '',
   });
 });
 
@@ -669,7 +672,7 @@ app.get('/api/stations/:code/facilities', (req, res) => {
   const code = String(req.params.code || 'CSMT').toUpperCase().trim();
   const scriptPath = path.join(__dirname, 'server', 'station_facilities.py');
   
-  if (fs.existsSync(scriptPath)) {
+  if (RUN_PYTHON_SUBPROCESSES && fs.existsSync(scriptPath)) {
     try {
       const py = spawnSync(PYTHON_COMMAND, [scriptPath, '--code', code], {
         encoding: 'utf-8',
@@ -733,7 +736,7 @@ app.get('/api/trains/:trainNumber/telemetry', (req, res) => {
   const trainNumber = String(req.params.trainNumber || '97380').trim();
   const scriptPath = path.join(__dirname, 'server', 'live_telemetry.py');
 
-  if (fs.existsSync(scriptPath)) {
+  if (RUN_PYTHON_SUBPROCESSES && fs.existsSync(scriptPath)) {
     try {
       const py = spawnSync(PYTHON_COMMAND, [scriptPath, '--train', trainNumber], {
         encoding: 'utf-8',
@@ -907,7 +910,7 @@ app.get('/api/trains/search', (req, res) => {
 
   // Authoritative Python Route Engine over validated SQLite database
   const pythonScript = path.join(__dirname, 'server', 'route_engine.py');
-  if (fs.existsSync(pythonScript)) {
+  if (RUN_PYTHON_SUBPROCESSES && fs.existsSync(pythonScript)) {
     try {
       const py = spawnSync(PYTHON_COMMAND, [pythonScript, '--origin', origin, '--destination', destination, '--time', time, '--date', dateStr], {
         encoding: 'utf-8',
@@ -988,7 +991,7 @@ app.get('/api/trains/search', (req, res) => {
 app.get('/api/trains/active-fleet', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   const scriptPath = path.join(__dirname, 'backend', 'timetable_engine.py');
-  if (fs.existsSync(scriptPath)) {
+  if (RUN_PYTHON_SUBPROCESSES && fs.existsSync(scriptPath)) {
     try {
       const py = spawnSync(PYTHON_COMMAND, [scriptPath, '--fleet'], { encoding: 'utf-8', timeout: 5000 });
       if (py.status === 0 && py.stdout) {
@@ -1032,7 +1035,7 @@ app.get('/api/timetable/first-last', (req, res) => {
   const destination = String(req.query.destination || 'KYN').toUpperCase().trim();
 
   const scriptPath = path.join(__dirname, 'backend', 'timetable_engine.py');
-  if (fs.existsSync(scriptPath)) {
+  if (RUN_PYTHON_SUBPROCESSES && fs.existsSync(scriptPath)) {
     try {
       const py = spawnSync(PYTHON_COMMAND, [scriptPath, '--first-last', '--origin', origin, '--destination', destination], {
         encoding: 'utf-8',
@@ -1054,22 +1057,38 @@ app.get('/api/timetable/first-last', (req, res) => {
     } catch (e) {}
   }
 
+  // The Vercel fallback must remain timetable-backed rather than returning
+  // illustrative train times when the local Python process is unavailable.
+  const directTimetable = searchTimetableDirect(origin, destination, '00:00');
+  const dailyServices = [...(directTimetable.all_scheduled_trains || [])]
+    .sort((a, b) => parseMinutes(a.departure_time) - parseMinutes(b.departure_time));
+  const formatService = (train, label, departure, arrival) => train ? {
+    train_number: train.train_number,
+    train_name: train.train_name,
+    departure_time: train.departure_time,
+    arrival_time: train.arrival_time,
+    speed: train.is_fast ? 'Fast' : 'Slow',
+    train_type: train.train_type,
+    is_ac: train.is_ac,
+  } : {
+    train_number: '',
+    train_name: `${origin} - ${destination} ${label} Local`,
+    departure_time: departure,
+    arrival_time: arrival,
+    speed: 'Slow',
+  };
+
+  const firstTrain = formatService(dailyServices[0], 'First', '04:15', '05:12');
+  const lastTrain = formatService(dailyServices.at(-1), 'Last', '23:55', '00:52');
   return res.json({
     success: true,
-    forward_first_train: {
-      train_number: '97002',
-      train_name: `${origin} - ${destination} First Local`,
-      departure_time: '04:15',
-      arrival_time: '05:12',
-      speed: 'Slow',
-    },
-    forward_last_train: {
-      train_number: '97452',
-      train_name: `${origin} - ${destination} Midnight Local`,
-      departure_time: '23:55',
-      arrival_time: '00:52',
-      speed: 'Slow',
-    },
+    forward_first_train: firstTrain,
+    forward_last_train: lastTrain,
+    first_train: firstTrain,
+    last_train: lastTrain,
+    total_daily_services: dailyServices.length,
+    origin,
+    destination,
   });
 });
 
@@ -1106,7 +1125,7 @@ app.get('/api/fare', (req, res) => {
 app.get('/api/railway-updates', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   const pythonScript = path.join(__dirname, 'server', 'railway_news.py');
-  if (fs.existsSync(pythonScript)) {
+  if (RUN_PYTHON_SUBPROCESSES && fs.existsSync(pythonScript)) {
     try {
       const py = spawnSync(PYTHON_COMMAND, [pythonScript], {
         encoding: 'utf-8',
@@ -1130,7 +1149,7 @@ app.get('/api/railway-updates', (req, res) => {
 app.get('/api/railway-notices', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   const pythonScript = path.join(__dirname, 'server', 'railway_news.py');
-  if (fs.existsSync(pythonScript)) {
+  if (RUN_PYTHON_SUBPROCESSES && fs.existsSync(pythonScript)) {
     try {
       const py = spawnSync(PYTHON_COMMAND, [pythonScript], {
         encoding: 'utf-8',
@@ -1341,7 +1360,7 @@ app.post('/api/ai/ask', async (req, res) => {
 
   try {
     const { GoogleGenAI } = await import('@google/genai');
-    const ai = new GoogleGenAI({});
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3.1-flash-lite',
       contents: query,
@@ -1393,7 +1412,7 @@ app.post('/api/railway-notices/verify', async (req, res) => {
 
   try {
     const { GoogleGenAI } = await import('@google/genai');
-    const ai = new GoogleGenAI({});
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const prompt = `Analyze this Central Railway Mumbai suburban advisory or notice:
 Notice: "${noticeText}"
 Train Number: "${trainNumber}"

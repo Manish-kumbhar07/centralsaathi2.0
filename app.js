@@ -35,6 +35,120 @@ let currentServiceFilter = 'ALL';
 let currentOriginCode = 'TNA';
 let currentDestCode = 'CSMT';
 
+function normalizeStationSearchText(value) {
+  return String(value ?? '').trim().normalize('NFC').toLocaleLowerCase();
+}
+
+const STATION_SEARCH_ALIASES = {
+  CSMT: ['CST', 'VT', 'Victoria Terminus', 'Chhatrapati Shivaji Terminus'],
+  MMCT: ['Bombay Central'],
+};
+
+function getStationSearchFields(station) {
+  return [station.code, station.name, station.marathi_name, ...(STATION_SEARCH_ALIASES[station.code] || [])]
+    .map(normalizeStationSearchText)
+    .filter(Boolean);
+}
+
+function searchStations(query, limit) {
+  const normalizedQuery = normalizeStationSearchText(query);
+  if (!normalizedQuery) return allStations.slice(0, limit);
+
+  return allStations
+    .map((station, index) => {
+      const fields = getStationSearchFields(station);
+      const exactRank = fields.some(field => field === normalizedQuery) ? 0 : null;
+      const prefixRank = fields.some(field => field.startsWith(normalizedQuery)) ? 1 : null;
+      const containsRank = fields.some(field => field.includes(normalizedQuery)) ? 2 : null;
+      const rank = exactRank ?? prefixRank ?? containsRank;
+      return { station, index, rank };
+    })
+    .filter(result => result.rank !== null)
+    .sort((a, b) => a.rank - b.rank || a.index - b.index)
+    .slice(0, limit)
+    .map(result => result.station);
+}
+
+function setupStationAutocomplete(inputId, dropdownId) {
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(dropdownId);
+  if (!input || !dropdown || input.dataset.autocompleteReady === 'true') return;
+
+  input.dataset.autocompleteReady = 'true';
+  input.setAttribute('role', 'combobox');
+  input.setAttribute('aria-autocomplete', 'list');
+  input.setAttribute('aria-haspopup', 'listbox');
+  input.setAttribute('aria-controls', dropdownId);
+  input.setAttribute('aria-expanded', 'false');
+  dropdown.setAttribute('role', 'listbox');
+
+  const syncExpanded = () => {
+    const expanded = !dropdown.classList.contains('hidden');
+    input.setAttribute('aria-expanded', String(expanded));
+    if (!expanded) input.removeAttribute('aria-activedescendant');
+  };
+  new MutationObserver(syncExpanded).observe(dropdown, { attributes: true, attributeFilter: ['class'] });
+  input.addEventListener('input', () => input.removeAttribute('aria-activedescendant'));
+
+  const activateOption = (option) => {
+    dropdown.querySelectorAll('[role="option"]').forEach(item => {
+      const active = item === option;
+      item.setAttribute('aria-selected', String(active));
+      item.classList.toggle('bg-emerald-50', active);
+      item.classList.toggle('text-emerald-950', active);
+    });
+    if (option?.id) input.setAttribute('aria-activedescendant', option.id);
+  };
+
+  input.addEventListener('keydown', (event) => {
+    const options = [...dropdown.querySelectorAll('[role="option"]:not([aria-disabled="true"])')];
+    const activeIndex = options.findIndex(option => option.getAttribute('aria-selected') === 'true');
+    const query = normalizeStationSearchText(input.value);
+    const exactIndexes = options
+      .map((option, index) => ({ option, index }))
+      .filter(({ option }) => {
+        const station = allStations.find(item => item.code === option.dataset.stationCode);
+        return station && getStationSearchFields(station).includes(query);
+      })
+      .map(({ index }) => index);
+
+    if (event.key === 'Escape' && !dropdown.classList.contains('hidden')) {
+      event.preventDefault();
+      dropdown.classList.add('hidden');
+      return;
+    }
+
+    if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && options.length && !dropdown.classList.contains('hidden')) {
+      event.preventDefault();
+      const direction = event.key === 'ArrowDown' ? 1 : -1;
+      const nextIndex = activeIndex === -1
+        ? (direction === 1 ? 0 : options.length - 1)
+        : (activeIndex + direction + options.length) % options.length;
+      activateOption(options[nextIndex]);
+      return;
+    }
+
+    if ((event.key === 'Home' || event.key === 'End') && options.length && !dropdown.classList.contains('hidden')) {
+      event.preventDefault();
+      activateOption(event.key === 'Home' ? options[0] : options[options.length - 1]);
+      return;
+    }
+
+    const enterIndex = activeIndex !== -1
+      ? activeIndex
+      : (options.length === 1 ? 0 : (exactIndexes.length === 1 ? exactIndexes[0] : -1));
+    if (event.key === 'Enter' && !dropdown.classList.contains('hidden') && enterIndex !== -1) {
+      event.preventDefault();
+      options[enterIndex].click();
+    }
+  });
+
+  dropdown.addEventListener('mousemove', (event) => {
+    const option = event.target.closest('[role="option"]');
+    if (option && dropdown.contains(option)) activateOption(option);
+  });
+}
+
 // GPS & Wake Alarm State
 let gpsWatchId = null;
 let simulationInterval = null;
@@ -76,6 +190,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupTabNavigation();
   setupPlannerEvents();
   setupHeroEvents();
+  setupStationAutocomplete('mapStationSearchInput', 'mapStationSearchDropdown');
   setupSpeedometerEvents();
   setupMobileMenu();
   loadSavedPersonalNotes();
@@ -1361,7 +1476,7 @@ window.filterMapStationSearch = function(query) {
   const dropdown = document.getElementById('mapStationSearchDropdown');
   if (!dropdown) return;
 
-  const q = String(query || '').trim().toLowerCase();
+  const q = normalizeStationSearchText(query);
   
   // If query is empty, show curated Central Line stations directory
   if (!q) {
@@ -1374,7 +1489,7 @@ window.filterMapStationSearch = function(query) {
     let html = '<div class="p-2 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 flex items-center justify-between"><span>Central Railway Stations</span><span class="text-rose-700">Click to Explore</span></div>';
     curated.forEach(s => {
       html += `
-        <div 
+        <div id="station-option-map-${s.code}" data-station-code="${s.code}" role="option" aria-selected="false"
           onclick="selectStationFromMapSearch('${s.code}')" 
           class="p-2.5 hover:bg-rose-50 cursor-pointer flex items-center justify-between transition-colors"
         >
@@ -1391,14 +1506,10 @@ window.filterMapStationSearch = function(query) {
     return;
   }
 
-  const matches = allStations.filter(s =>
-    s.name.toLowerCase().includes(q) ||
-    s.code.toLowerCase().includes(q) ||
-    (s.marathi_name && s.marathi_name.includes(q))
-  ).slice(0, 8);
+  const matches = searchStations(q, 8);
 
   if (matches.length === 0) {
-    dropdown.innerHTML = '<div class="p-3 text-slate-400 text-center">No stations found</div>';
+    dropdown.innerHTML = '<div role="status" aria-live="polite" class="p-3 text-slate-400 text-center">No match. Try an English name, Marathi name, or station code.</div>';
     dropdown.classList.remove('hidden');
     return;
   }
@@ -1406,7 +1517,7 @@ window.filterMapStationSearch = function(query) {
   let html = '';
   matches.forEach(s => {
     html += `
-      <div 
+      <div id="station-option-map-${s.code}" data-station-code="${s.code}" role="option" aria-selected="false"
         onclick="selectStationFromMapSearch('${s.code}')" 
         class="p-2.5 hover:bg-emerald-50 cursor-pointer flex items-center justify-between transition-colors"
       >
@@ -2031,6 +2142,9 @@ async function initHeroWallpaper() {
 function setupHeroEvents() {
   const heroFrom = document.getElementById('heroOriginInput');
   const heroTo = document.getElementById('heroDestInput');
+
+  setupStationAutocomplete('heroOriginInput', 'heroOriginDropdown');
+  setupStationAutocomplete('heroDestInput', 'heroDestDropdown');
   const heroTime = document.getElementById('heroTimeInput');
 
   // Pre-fill current time in hero input
@@ -2039,9 +2153,15 @@ function setupHeroEvents() {
     heroTime.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   }
 
-  heroFrom?.addEventListener('input', (e) => filterHeroDropdown('origin', e.target.value));
+  heroFrom?.addEventListener('input', (e) => {
+    delete e.target.dataset.code;
+    filterHeroDropdown('origin', e.target.value);
+  });
   heroFrom?.addEventListener('focus', (e) => filterHeroDropdown('origin', e.target.value));
-  heroTo?.addEventListener('input', (e) => filterHeroDropdown('dest', e.target.value));
+  heroTo?.addEventListener('input', (e) => {
+    delete e.target.dataset.code;
+    filterHeroDropdown('dest', e.target.value);
+  });
   heroTo?.addEventListener('focus', (e) => filterHeroDropdown('dest', e.target.value));
 
   document.addEventListener('click', (e) => {
@@ -2058,15 +2178,10 @@ function filterHeroDropdown(type, query) {
   const dropdown = document.getElementById(type === 'origin' ? 'heroOriginDropdown' : 'heroDestDropdown');
   if (!dropdown) return;
 
-  const q = (query || '').trim().toLowerCase();
-  const matched = allStations.filter(s => {
-    return s.code.toLowerCase().includes(q) ||
-           s.name.toLowerCase().includes(q) ||
-           (s.marathi_name && s.marathi_name.includes(q));
-  }).slice(0, 10);
+  const matched = searchStations(query, 10);
 
   if (matched.length === 0) {
-    dropdown.innerHTML = `<div class="p-3 text-xs text-slate-400 text-center">No stations found</div>`;
+    dropdown.innerHTML = `<div role="status" aria-live="polite" class="p-3 text-xs text-slate-400 text-center">No match. Try an English name, Marathi name, or station code.</div>`;
     dropdown.classList.remove('hidden');
     return;
   }
@@ -2074,14 +2189,14 @@ function filterHeroDropdown(type, query) {
   let html = '';
   matched.forEach(s => {
     html += `
-      <div 
+      <div id="station-option-hero-${type}-${s.code}" data-station-code="${s.code}" role="option" aria-selected="false"
         class="p-2.5 hover:bg-slate-50 cursor-pointer flex items-center justify-between transition-colors"
         onclick="selectHeroStation('${type}', '${s.code}')"
       >
         <div class="flex items-center gap-2">
           <span class="w-8 h-6 rounded bg-emerald-50 text-emerald-800 text-xs font-black flex items-center justify-center">${s.code}</span>
           <div>
-            <div class="text-xs font-bold text-slate-900">${s.name}</div>
+            <div class="text-xs font-bold text-slate-900">${s.name}${s.marathi_name ? ` <span lang="mr" class="text-slate-500 font-medium">(${s.marathi_name})</span>` : ''}</div>
             <div class="text-[10px] text-slate-400">${s.dist_km} km · Door: ${s.door_side || 'Left'}</div>
           </div>
         </div>
@@ -2150,14 +2265,23 @@ function setupPlannerEvents() {
   const findBtn = document.getElementById('findBestTrainBtn');
   const plannerTime = document.getElementById('plannerTimeInput');
 
+  setupStationAutocomplete('originInput', 'originDropdown');
+  setupStationAutocomplete('destInput', 'destDropdown');
+
   if (plannerTime) {
     const now = new Date();
     plannerTime.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   }
 
-  originInput?.addEventListener('input', (e) => filterStationDropdown('origin', e.target.value));
+  originInput?.addEventListener('input', (e) => {
+    delete e.target.dataset.code;
+    filterStationDropdown('origin', e.target.value);
+  });
   originInput?.addEventListener('focus', (e) => filterStationDropdown('origin', e.target.value));
-  destInput?.addEventListener('input', (e) => filterStationDropdown('dest', e.target.value));
+  destInput?.addEventListener('input', (e) => {
+    delete e.target.dataset.code;
+    filterStationDropdown('dest', e.target.value);
+  });
   destInput?.addEventListener('focus', (e) => filterStationDropdown('dest', e.target.value));
 
   document.addEventListener('click', (e) => {
@@ -2208,15 +2332,10 @@ function filterStationDropdown(type, query) {
   const dropdown = document.getElementById(type === 'origin' ? 'originDropdown' : 'destDropdown');
   if (!dropdown) return;
 
-  const q = (query || '').trim().toLowerCase();
-  const matched = allStations.filter(s => {
-    return s.code.toLowerCase().includes(q) ||
-           s.name.toLowerCase().includes(q) ||
-           (s.marathi_name && s.marathi_name.includes(q));
-  }).slice(0, 10);
+  const matched = searchStations(query, 10);
 
   if (matched.length === 0) {
-    dropdown.innerHTML = `<div class="p-3 text-xs text-slate-400 text-center">No stations found</div>`;
+    dropdown.innerHTML = `<div role="status" aria-live="polite" class="p-3 text-xs text-slate-400 text-center">No match. Try an English name, Marathi name, or station code.</div>`;
     dropdown.classList.remove('hidden');
     return;
   }
@@ -2227,14 +2346,14 @@ function filterStationDropdown(type, query) {
     const fastTag = s.is_fast ? `<span class="text-[9px] text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded font-bold">Fast</span>` : '';
 
     html += `
-      <div 
+      <div id="station-option-planner-${type}-${s.code}" data-station-code="${s.code}" role="option" aria-selected="false"
         class="p-2.5 hover:bg-slate-50 cursor-pointer flex items-center justify-between transition-colors"
         onclick="selectStation('${type}', '${s.code}')"
       >
         <div class="flex items-center gap-2">
           <span class="w-8 h-6 rounded bg-slate-100 text-slate-900 text-xs font-black flex items-center justify-center">${s.code}</span>
           <div>
-            <div class="text-xs font-bold text-slate-900">${s.name} <span class="text-slate-400 font-normal">(${s.marathi_name || ''})</span></div>
+            <div class="text-xs font-bold text-slate-900">${s.name} <span lang="mr" class="text-slate-400 font-normal">(${s.marathi_name || ''})</span></div>
             <div class="text-[10px] text-slate-400">${s.dist_km} km · PF ${s.platforms || 2}</div>
           </div>
         </div>

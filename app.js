@@ -2304,7 +2304,7 @@ function filterStationDropdown(type, query) {
         <div class="flex items-center gap-2">
           <span class="w-8 h-6 rounded bg-slate-100 text-slate-900 text-xs font-black flex items-center justify-center">${s.code}</span>
           <div>
-            <div class="text-xs font-bold text-slate-900">${s.name} <span class="text-slate-400 font-normal">(${s.marathi_name || ''})</span></div>
+            <div class="text-xs font-bold text-slate-900">${s.name} <span lang="mr" class="text-slate-400 font-normal">(${s.marathi_name || ''})</span></div>
             <div class="text-[10px] text-slate-400">${s.dist_km} km · PF ${s.platforms || 2}</div>
           </div>
         </div>

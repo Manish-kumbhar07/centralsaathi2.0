@@ -39,6 +39,32 @@ function normalizeStationSearchText(value) {
   return String(value ?? '').trim().normalize('NFC').toLocaleLowerCase();
 }
 
+const STATION_SEARCH_ALIASES = {
+  CSMT: ['CST', 'VT', 'Victoria Terminus', 'Chhatrapati Shivaji Terminus'],
+  MMCT: ['Bombay Central'],
+};
+
+function searchStations(query, limit) {
+  const normalizedQuery = normalizeStationSearchText(query);
+  if (!normalizedQuery) return allStations.slice(0, limit);
+
+  return allStations
+    .map((station, index) => {
+      const fields = [station.code, station.name, station.marathi_name, ...(STATION_SEARCH_ALIASES[station.code] || [])]
+        .map(normalizeStationSearchText)
+        .filter(Boolean);
+      const exactRank = fields.some(field => field === normalizedQuery) ? 0 : null;
+      const prefixRank = fields.some(field => field.startsWith(normalizedQuery)) ? 1 : null;
+      const containsRank = fields.some(field => field.includes(normalizedQuery)) ? 2 : null;
+      const rank = exactRank ?? prefixRank ?? containsRank;
+      return { station, index, rank };
+    })
+    .filter(result => result.rank !== null)
+    .sort((a, b) => a.rank - b.rank || a.index - b.index)
+    .slice(0, limit)
+    .map(result => result.station);
+}
+
 // GPS & Wake Alarm State
 let gpsWatchId = null;
 let simulationInterval = null;
@@ -1384,11 +1410,7 @@ window.filterMapStationSearch = function(query) {
     return;
   }
 
-  const matches = allStations.filter(s =>
-    normalizeStationSearchText(s.name).includes(q) ||
-    normalizeStationSearchText(s.code).includes(q) ||
-    normalizeStationSearchText(s.marathi_name).includes(q)
-  ).slice(0, 8);
+  const matches = searchStations(q, 8);
 
   if (matches.length === 0) {
     dropdown.innerHTML = '<div class="p-3 text-slate-400 text-center">No stations found</div>';
@@ -2035,12 +2057,7 @@ function filterHeroDropdown(type, query) {
   const dropdown = document.getElementById(type === 'origin' ? 'heroOriginDropdown' : 'heroDestDropdown');
   if (!dropdown) return;
 
-  const q = normalizeStationSearchText(query);
-  const matched = allStations.filter(s => {
-    return normalizeStationSearchText(s.code).includes(q) ||
-           normalizeStationSearchText(s.name).includes(q) ||
-           normalizeStationSearchText(s.marathi_name).includes(q);
-  }).slice(0, 10);
+  const matched = searchStations(query, 10);
 
   if (matched.length === 0) {
     dropdown.innerHTML = `<div class="p-3 text-xs text-slate-400 text-center">No stations found</div>`;
@@ -2185,12 +2202,7 @@ function filterStationDropdown(type, query) {
   const dropdown = document.getElementById(type === 'origin' ? 'originDropdown' : 'destDropdown');
   if (!dropdown) return;
 
-  const q = normalizeStationSearchText(query);
-  const matched = allStations.filter(s => {
-    return normalizeStationSearchText(s.code).includes(q) ||
-           normalizeStationSearchText(s.name).includes(q) ||
-           normalizeStationSearchText(s.marathi_name).includes(q);
-  }).slice(0, 10);
+  const matched = searchStations(query, 10);
 
   if (matched.length === 0) {
     dropdown.innerHTML = `<div class="p-3 text-xs text-slate-400 text-center">No stations found</div>`;

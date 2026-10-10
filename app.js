@@ -65,6 +65,68 @@ function searchStations(query, limit) {
     .map(result => result.station);
 }
 
+function setupStationAutocomplete(inputId, dropdownId) {
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(dropdownId);
+  if (!input || !dropdown || input.dataset.autocompleteReady === 'true') return;
+
+  input.dataset.autocompleteReady = 'true';
+  input.setAttribute('role', 'combobox');
+  input.setAttribute('aria-autocomplete', 'list');
+  input.setAttribute('aria-haspopup', 'listbox');
+  input.setAttribute('aria-controls', dropdownId);
+  input.setAttribute('aria-expanded', 'false');
+  dropdown.setAttribute('role', 'listbox');
+
+  const syncExpanded = () => {
+    const expanded = !dropdown.classList.contains('hidden');
+    input.setAttribute('aria-expanded', String(expanded));
+    if (!expanded) input.removeAttribute('aria-activedescendant');
+  };
+  new MutationObserver(syncExpanded).observe(dropdown, { attributes: true, attributeFilter: ['class'] });
+
+  const activateOption = (option) => {
+    dropdown.querySelectorAll('[role="option"]').forEach(item => {
+      const active = item === option;
+      item.setAttribute('aria-selected', String(active));
+      item.classList.toggle('bg-emerald-50', active);
+      item.classList.toggle('text-emerald-950', active);
+    });
+    if (option?.id) input.setAttribute('aria-activedescendant', option.id);
+  };
+
+  input.addEventListener('keydown', (event) => {
+    const options = [...dropdown.querySelectorAll('[role="option"]:not([aria-disabled="true"])')];
+    const activeIndex = options.findIndex(option => option.getAttribute('aria-selected') === 'true');
+
+    if (event.key === 'Escape' && !dropdown.classList.contains('hidden')) {
+      event.preventDefault();
+      dropdown.classList.add('hidden');
+      return;
+    }
+
+    if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && options.length) {
+      event.preventDefault();
+      const direction = event.key === 'ArrowDown' ? 1 : -1;
+      const nextIndex = activeIndex === -1
+        ? (direction === 1 ? 0 : options.length - 1)
+        : (activeIndex + direction + options.length) % options.length;
+      activateOption(options[nextIndex]);
+      return;
+    }
+
+    if (event.key === 'Enter' && !dropdown.classList.contains('hidden') && activeIndex !== -1) {
+      event.preventDefault();
+      options[activeIndex].click();
+    }
+  });
+
+  dropdown.addEventListener('mousemove', (event) => {
+    const option = event.target.closest('[role="option"]');
+    if (option && dropdown.contains(option)) activateOption(option);
+  });
+}
+
 // GPS & Wake Alarm State
 let gpsWatchId = null;
 let simulationInterval = null;
@@ -106,6 +168,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupTabNavigation();
   setupPlannerEvents();
   setupHeroEvents();
+  setupStationAutocomplete('mapStationSearchInput', 'mapStationSearchDropdown');
   setupSpeedometerEvents();
   setupMobileMenu();
   loadSavedPersonalNotes();
@@ -1393,7 +1456,7 @@ window.filterMapStationSearch = function(query) {
     let html = '<div class="p-2 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 flex items-center justify-between"><span>Central Railway Stations</span><span class="text-rose-700">Click to Explore</span></div>';
     curated.forEach(s => {
       html += `
-        <div 
+        <div id="station-option-map-${s.code}" role="option" aria-selected="false"
           onclick="selectStationFromMapSearch('${s.code}')" 
           class="p-2.5 hover:bg-rose-50 cursor-pointer flex items-center justify-between transition-colors"
         >
@@ -1413,7 +1476,7 @@ window.filterMapStationSearch = function(query) {
   const matches = searchStations(q, 8);
 
   if (matches.length === 0) {
-    dropdown.innerHTML = '<div class="p-3 text-slate-400 text-center">No stations found</div>';
+    dropdown.innerHTML = '<div role="status" aria-live="polite" class="p-3 text-slate-400 text-center">No stations found</div>';
     dropdown.classList.remove('hidden');
     return;
   }
@@ -1421,7 +1484,7 @@ window.filterMapStationSearch = function(query) {
   let html = '';
   matches.forEach(s => {
     html += `
-      <div 
+      <div id="station-option-map-${s.code}" role="option" aria-selected="false"
         onclick="selectStationFromMapSearch('${s.code}')" 
         class="p-2.5 hover:bg-emerald-50 cursor-pointer flex items-center justify-between transition-colors"
       >
@@ -2030,6 +2093,9 @@ async function initHeroWallpaper() {
 function setupHeroEvents() {
   const heroFrom = document.getElementById('heroOriginInput');
   const heroTo = document.getElementById('heroDestInput');
+
+  setupStationAutocomplete('heroOriginInput', 'heroOriginDropdown');
+  setupStationAutocomplete('heroDestInput', 'heroDestDropdown');
   const heroTime = document.getElementById('heroTimeInput');
 
   // Pre-fill current time in hero input
@@ -2066,7 +2132,7 @@ function filterHeroDropdown(type, query) {
   const matched = searchStations(query, 10);
 
   if (matched.length === 0) {
-    dropdown.innerHTML = `<div class="p-3 text-xs text-slate-400 text-center">No stations found</div>`;
+    dropdown.innerHTML = `<div role="status" aria-live="polite" class="p-3 text-xs text-slate-400 text-center">No stations found</div>`;
     dropdown.classList.remove('hidden');
     return;
   }
@@ -2074,7 +2140,7 @@ function filterHeroDropdown(type, query) {
   let html = '';
   matched.forEach(s => {
     html += `
-      <div 
+      <div id="station-option-hero-${type}-${s.code}" role="option" aria-selected="false"
         class="p-2.5 hover:bg-slate-50 cursor-pointer flex items-center justify-between transition-colors"
         onclick="selectHeroStation('${type}', '${s.code}')"
       >
@@ -2150,6 +2216,9 @@ function setupPlannerEvents() {
   const findBtn = document.getElementById('findBestTrainBtn');
   const plannerTime = document.getElementById('plannerTimeInput');
 
+  setupStationAutocomplete('originInput', 'originDropdown');
+  setupStationAutocomplete('destInput', 'destDropdown');
+
   if (plannerTime) {
     const now = new Date();
     plannerTime.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -2217,7 +2286,7 @@ function filterStationDropdown(type, query) {
   const matched = searchStations(query, 10);
 
   if (matched.length === 0) {
-    dropdown.innerHTML = `<div class="p-3 text-xs text-slate-400 text-center">No stations found</div>`;
+    dropdown.innerHTML = `<div role="status" aria-live="polite" class="p-3 text-xs text-slate-400 text-center">No stations found</div>`;
     dropdown.classList.remove('hidden');
     return;
   }
@@ -2228,7 +2297,7 @@ function filterStationDropdown(type, query) {
     const fastTag = s.is_fast ? `<span class="text-[9px] text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded font-bold">Fast</span>` : '';
 
     html += `
-      <div 
+      <div id="station-option-planner-${type}-${s.code}" role="option" aria-selected="false"
         class="p-2.5 hover:bg-slate-50 cursor-pointer flex items-center justify-between transition-colors"
         onclick="selectStation('${type}', '${s.code}')"
       >

@@ -573,7 +573,7 @@
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <!-- FROM -->
                 <div class="relative">
-                  <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-1">FROM STATION</label>
+                  <label for="heroOriginInput" class="block text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-1">FROM STATION</label>
                   <input 
                     type="text" 
                     id="heroOriginInput" 
@@ -588,7 +588,7 @@
 
                 <!-- TO -->
                 <div class="relative">
-                  <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-1">TO DESTINATION</label>
+                  <label for="heroDestInput" class="block text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-1">TO DESTINATION</label>
                   <input 
                     type="text" 
                     id="heroDestInput" 
@@ -784,7 +784,7 @@
           
           <!-- FROM Station Input -->
           <div class="md:col-span-4 relative" id="originContainer">
-            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">BOARDING STATION (FROM)</label>
+            <label for="originInput" class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">BOARDING STATION (FROM)</label>
             <input 
               type="text" 
               id="originInput" 
@@ -812,7 +812,7 @@
 
           <!-- TO Station Input -->
           <div class="md:col-span-4 relative" id="destContainer">
-            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">DESTINATION STATION (TO)</label>
+            <label for="destInput" class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">DESTINATION STATION (TO)</label>
             <input 
               type="text" 
               id="destInput" 
@@ -1134,6 +1134,7 @@
               <input 
                 type="text" 
                 id="mapStationSearchInput" 
+                aria-label="Search stations by name, code, or Marathi name"
                 autocomplete="off" 
                 placeholder="Search station (e.g. Dadar, Thane, Kurla)..." 
                 class="w-full pl-8 pr-3 py-1.5 bg-slate-50 focus:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs"

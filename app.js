@@ -116,6 +116,12 @@ function setupStationAutocomplete(inputId, dropdownId) {
       return;
     }
 
+    if ((event.key === 'Home' || event.key === 'End') && options.length && !dropdown.classList.contains('hidden')) {
+      event.preventDefault();
+      activateOption(event.key === 'Home' ? options[0] : options[options.length - 1]);
+      return;
+    }
+
     const enterIndex = activeIndex !== -1 ? activeIndex : (options.length === 1 ? 0 : -1);
     if (event.key === 'Enter' && !dropdown.classList.contains('hidden') && enterIndex !== -1) {
       event.preventDefault();

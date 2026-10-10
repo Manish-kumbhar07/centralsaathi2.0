@@ -2075,7 +2075,7 @@ function filterHeroDropdown(type, query) {
         <div class="flex items-center gap-2">
           <span class="w-8 h-6 rounded bg-emerald-50 text-emerald-800 text-xs font-black flex items-center justify-center">${s.code}</span>
           <div>
-            <div class="text-xs font-bold text-slate-900">${s.name}</div>
+            <div class="text-xs font-bold text-slate-900">${s.name}${s.marathi_name ? ` <span lang="mr" class="text-slate-500 font-medium">(${s.marathi_name})</span>` : ''}</div>
             <div class="text-[10px] text-slate-400">${s.dist_km} km · Door: ${s.door_side || 'Left'}</div>
           </div>
         </div>

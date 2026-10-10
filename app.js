@@ -1476,7 +1476,7 @@ window.filterMapStationSearch = function(query) {
   const matches = searchStations(q, 8);
 
   if (matches.length === 0) {
-    dropdown.innerHTML = '<div role="status" aria-live="polite" class="p-3 text-slate-400 text-center">No stations found</div>';
+    dropdown.innerHTML = '<div role="status" aria-live="polite" class="p-3 text-slate-400 text-center">No match. Try an English name, Marathi name, or station code.</div>';
     dropdown.classList.remove('hidden');
     return;
   }
@@ -2132,7 +2132,7 @@ function filterHeroDropdown(type, query) {
   const matched = searchStations(query, 10);
 
   if (matched.length === 0) {
-    dropdown.innerHTML = `<div role="status" aria-live="polite" class="p-3 text-xs text-slate-400 text-center">No stations found</div>`;
+    dropdown.innerHTML = `<div role="status" aria-live="polite" class="p-3 text-xs text-slate-400 text-center">No match. Try an English name, Marathi name, or station code.</div>`;
     dropdown.classList.remove('hidden');
     return;
   }
@@ -2286,7 +2286,7 @@ function filterStationDropdown(type, query) {
   const matched = searchStations(query, 10);
 
   if (matched.length === 0) {
-    dropdown.innerHTML = `<div role="status" aria-live="polite" class="p-3 text-xs text-slate-400 text-center">No stations found</div>`;
+    dropdown.innerHTML = `<div role="status" aria-live="polite" class="p-3 text-xs text-slate-400 text-center">No match. Try an English name, Marathi name, or station code.</div>`;
     dropdown.classList.remove('hidden');
     return;
   }
